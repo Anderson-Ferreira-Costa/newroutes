@@ -47,6 +47,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -58,6 +59,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -111,7 +116,6 @@ dependencies {
 
     // ---- OSMDroid (Maps) ----
     implementation("org.osmdroid:osmdroid-android:6.1.18")
-    implementation("org.osmdroid:osmdroid-gemarker:6.1.18")
 
     // ---- Location ----
     implementation("com.google.android.gms:play-services-location:21.3.0")

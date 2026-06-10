@@ -1,11 +1,15 @@
 package com.newroutes.app.domain.model
 
-// TODO: Implementar modelo de ponto de passagem (waypoint)
-// Deve conter: latitude, longitude, nome/endereço, ordem na rota
+import java.util.UUID
+
+/**
+ * Representa um ponto na rota, seja origem, destino ou parada intermediária.
+ * Contém coordenadas geográficas e identificação textual opcional.
+ */
 data class Waypoint(
-    val id: String = "",
-    val latitude: Double = 0.0,
-    val longitude: Double = 0.0,
-    val name: String = "",
-    val order: Int = 0
+    val id: UUID = UUID.randomUUID(),
+    val name: String,
+    val latitude: Double,
+    val longitude: Double,
+    val address: String = ""
 )

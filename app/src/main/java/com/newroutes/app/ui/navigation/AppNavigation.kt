@@ -1,18 +1,20 @@
 package com.newroutes.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.newroutes.app.ui.map.MapScreen
+import com.newroutes.app.ui.map.SharedRouteConfig
 import com.newroutes.app.ui.route.RouteScreen
 import com.newroutes.app.ui.summary.SummaryScreen
 
 sealed class Screen(val route: String) {
     object Map : Screen("map")
     object Route : Screen("route")
-    object Summary : Screen("summary")
+    object Summary : Screen("summary/{routeId}")
 }
 
 @Composable
@@ -20,6 +22,8 @@ fun AppNavigation(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val sharedConfig = remember { SharedRouteConfig() }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Map.route,
@@ -27,24 +31,29 @@ fun AppNavigation(
     ) {
         composable(Screen.Map.route) {
             MapScreen(
-                onRouteSelected = {
-                    navController.navigate(Screen.Route.route)
-                }
+                onNavigateToSummary = { route ->
+                    navController.navigate("summary/${route.id}")
+                },
+                sharedConfig = sharedConfig
             )
         }
         composable(Screen.Route.route) {
             RouteScreen(
-                onConfirm = {
-                    navController.navigate(Screen.Summary.route)
+                onWaypointsConfirmed = { waypoints, vehicle ->
+                    sharedConfig.waypoints = waypoints
+                    sharedConfig.vehicle = vehicle
+                    navController.popBackStack()
                 },
-                onBack = {
+                onNavigateBack = {
                     navController.popBackStack()
                 }
             )
         }
-        composable(Screen.Summary.route) {
+        composable("summary/{routeId}") { backStackEntry ->
+            val routeId = backStackEntry.arguments?.getString("routeId") ?: ""
             SummaryScreen(
-                onBack = {
+                routeId = routeId,
+                onNavigateBack = {
                     navController.popBackStack()
                 }
             )

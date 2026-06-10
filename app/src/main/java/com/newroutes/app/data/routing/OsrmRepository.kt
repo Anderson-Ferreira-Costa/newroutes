@@ -1,31 +1,52 @@
 package com.newroutes.app.data.routing
 
-import com.newroutes.app.domain.model.Route
-import com.newroutes.app.domain.repository.IRouteRepository
+import com.newroutes.app.domain.model.Waypoint
 
-// TODO: Implementar repositório de rotas usando OSRM via Retrofit
-// Deve consumir os endpoints do OSRM público para cálculo de rotas
+/**
+ * Implementação concreta do repositório de roteamento usando a API OSRM.
+ *
+ * Não implementa interface de domain/ — IRouteRepository será implementada
+ * por RouteRepository em Session 6 (junto com Room para persistência local).
+ *
+ * Recebe OsrmApi via construtor para injeção de dependência (Hilt).
+ */
 class OsrmRepository(
-    private val osrmClient: OsrmClient
-) : IRouteRepository {
+    private val osrmApi: OsrmApi
+) {
 
-    override fun getRoutes(): Flow<List<Route>> {
-        TODO("Implementar listagem de rotas salvas localmente")
-    }
+    /**
+     * Calcula uma rota via OSRM dado uma lista de waypoints.
+     *
+     * Monta a string de coordenadas no formato OSRM (lon,lat;lon,lat;...),
+     * chama a API e valida a resposta.
+     *
+     * @param waypoints Lista de waypoints (mínimo 2)
+     * @return Result com OsrmRouteResult em sucesso, ou failure em erro
+     */
+    suspend fun getRoute(waypoints: List<Waypoint>): Result<OsrmRouteResult> = runCatching {
+        if (waypoints.size < 2) {
+            throw IllegalArgumentException("Waypoints deve conter pelo menos 2 itens")
+        }
 
-    override suspend fun getRouteById(id: String): Route? {
-        TODO("Implementar busca de rota por ID")
-    }
+        val coordinates = waypoints.joinToString(";") { wp ->
+            "${wp.longitude},${wp.latitude}"
+        }
 
-    override suspend fun saveRoute(route: Route): String {
-        TODO("Implementar salvamento de rota localmente")
-    }
+        val response = osrmApi.getRoute(coordinates)
 
-    override suspend fun deleteRoute(id: String) {
-        TODO("Implementar deleção de rota")
-    }
+        if (response.code != "Ok") {
+            throw IllegalStateException("OSRM returned non-OK status: ${response.code}")
+        }
 
-    override suspend fun calculateRoute(waypoints: List<Pair<Double, Double>>): Route {
-        TODO("Implementar cálculo de rota via OSRM")
+        if (response.routes.isEmpty()) {
+            throw IllegalStateException("OSRM returned no routes")
+        }
+
+        val route = response.routes[0]
+        OsrmRouteResult(
+            distanceMeters = route.distance.toLong(),
+            durationSeconds = route.duration.toLong(),
+            encodedPolyline = route.geometry
+        )
     }
 }

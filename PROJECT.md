@@ -78,3 +78,79 @@ app/
 - `ACCESS_NETWORK_STATE` — Verificar conectividade
 - `ACCESS_FINE_LOCATION` — Localização do usuário
 - `WRITE_EXTERNAL_STORAGE` — Cache de tiles OSMDroid (API <= 32)
+
+## Histórico de Sessões
+
+### Sessão 1 — domain/model (concluída)
+- Waypoint, Route, TollPlaza, Vehicle criados em domain/model/
+- TollCategory enum em TollPlaza.kt, reutilizado por Vehicle
+- Route.kt tem validação via init/require (mínimo 2 waypoints)
+- IDs são java.util.UUID (sem imports de Android)
+- TODO: TypeConverter para TollCategory quando implementar Room em data/tolls/
+
+### Sessão 2 — domain/repository (concluída)
+- IRouteRepository, ITollRepository, IVehicleRepository criados em domain/repository/
+- saveRoute retorna Unit — ID gerado no model, não no repository
+- getTollPlazasNearRoute retorna List (não Flow) — consulta pontual, não stream
+- setDefault só recebe o ID a promover — implementação em data/ faz a transação de desmarcar os demais
+- Zero imports de framework — apenas Flow, UUID e modelos de domain/model/
+
+### Sessão 3 — domain/usecase (concluída)
+- CalculateRouteUseCase, EstimateCostUseCase, GetRoutesUseCase,
+  SaveRouteUseCase, DeleteRouteUseCase, ManageVehicleUseCase criados
+- Result<T> via kotlin.Result + mapCatching (sem classe própria)
+- distanceMeters e durationSeconds são 0L com TODO — depende de OsrmClient (data/)
+- Filtro de TollPlaza por category feito no UseCase após busca
+- getTollPlazasNearRoute com falha retorna emptyList() — revisar quando OSRM integrado
+- Zero imports de framework em toda a camada domain/
+
+### Sessão 4 — data/geocoding (concluída)
+- NominatimApi, NominatimPlace (DTO), NominatimRepository, GeocodingModule criados
+- Base URL: https://nominatim.openstreetmap.org/
+- @Query por método (limit=5 em search, limit=1 em reverse)
+- User-Agent header obrigatório: NewRoutes/1.0
+- BuildConfig.DEBUG adicionado ao build.gradle.kts (buildFeatures)
+- TODO: rate limiting 1 req/s no NominatimRepository
+- NominatimRepository NÃO implementa interface — domain/repository não tem contrato
+
+### Sessão 5 — data/routing (concluída)
+- OsrmApi, OsrmResponse (DTOs), OsrmRouteResult, OsrmRepository, RoutingModule criados
+- Base URL: https://router.project-osrm.org/
+- Coordenadas no formato lon,lat separadas por ";" (longitude primeiro — padrão OSRM)
+- @Named("osrm") em OkHttpClient e Retrofit para não colidir com GeocodingModule
+- Timeout 30s (vs 15s do Nominatim)
+- CalculateRouteUseCase atualizado — distanceMeters e durationSeconds reais, TODOs removidos
+- TODO: migrar para instância self-hosted do OSRM
+- OsrmRepository NÃO implementa IRouteRepository — responsabilidade separada
+
+### Sessão 6 — data/tolls / Room completo (concluída)
+- Converters, Entities (3), DAOs (3), Repositories (3), NewRoutesDatabase, DatabaseModule criados
+- @Upsert do Room 2.6.1 em todos os DAOs
+- TypeConverters via Moshi (UUID, TollCategory, List<TollPlaza>, List<Waypoint>, Vehicle)
+- bounding box com fator 111_000m/grau — aproximação aceitável para MVP
+  TODO: corrigir fator de longitude por latitude (cos(lat) * 111_320m)
+- setDefault sem @Transaction — TODO para versão futura
+- fallbackToDestructiveMigration() — TODO para migrations reais antes de produção
+- schemas/ criado, ksp schemaLocation configurado no build.gradle.kts
+- @Binds em RepositoryBindings (abstract class) separado dos @Provides (object)
+
+### Sessão 7+8 — ui/map + ui/route (concluída)
+- MapScreen: OSMDroid fullscreen + search bar + FAB + bottom sheet + polyline
+- MapViewModel: NominatimRepository + CalculateRouteUseCase + SaveRouteUseCase
+- RouteScreen: seleção de veículo (LazyRow) + waypoints com up/down reorder
+- RouteViewModel: ManageVehicleUseCase + NominatimRepository
+- AppNavigation: NavHost map/route/summary + SharedRouteConfig para comunicação entre telas
+- decodePolyline implementado localmente (sem dependência extra)
+- Markers via android.R.drawable — TODO substituir por assets próprios
+- SharedRouteConfig em MapScreen.kt — TODO mover para arquivo próprio
+- Drag-and-drop de waypoints não implementado (BOM 2024.12.01 sem suporte)
+  TODO: adicionar dependência de reorder quando disponível
+
+### Sessão 9 — ui/summary (concluída)
+- SummaryScreen: LazyColumn com 6 seções (métricas, custos, veículo, pedágios, itinerário, salvar)
+- SummaryViewModel: GetRoutesUseCase + SaveRouteUseCase + SavedStateHandle para routeId
+- formatDuration implementada como função local privada no arquivo da Screen
+- Ícones de veículo via when(category) com TollCategory
+- No nested LazyColumn — items() direto no LazyColumn pai para pedágios
+- Divider vertical entre waypoints do itinerário (conector visual)
+- SavedStateHandle["routeId"] para recuperar ID da rota via Navigation Compose

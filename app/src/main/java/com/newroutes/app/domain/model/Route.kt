@@ -1,15 +1,26 @@
 package com.newroutes.app.domain.model
 
-// TODO: Implementar modelo de dados da rota
-// Deve conter: lista de waypoints, distância total, tempo estimado, pedágios, custo total
+import java.util.UUID
+
+/**
+ * Representa uma rota completa calculada entre waypoints.
+ * Contém distâncias, tempos, pedágios e custos totais (pedágio + combustível).
+ */
 data class Route(
-    val id: String = "",
-    val name: String = "",
-    val waypoints: List<Waypoint> = emptyList(),
-    val distanceMeters: Long = 0,
-    val durationSeconds: Long = 0,
-    val tolls: List<TollPlaza> = emptyList(),
-    val totalCost: Double = 0.0,
-    val vehicle: Vehicle = Vehicle.Default,
-    val createdAt: Long = System.currentTimeMillis()
-)
+    val id: UUID = UUID.randomUUID(),
+    val waypoints: List<Waypoint>,
+    val distanceMeters: Long,
+    val durationSeconds: Long,
+    val tollPlazas: List<TollPlaza>,
+    val vehicle: Vehicle,
+    val totalTollCost: Double,
+    val totalFuelCost: Double,
+    val totalCost: Double
+) {
+    init {
+        require(waypoints.size >= 2) { "Uma rota deve ter pelo menos 2 waypoints" }
+        require(totalCost == (totalTollCost + totalFuelCost)) {
+            "totalCost deve ser a soma de totalTollCost + totalFuelCost"
+        }
+    }
+}

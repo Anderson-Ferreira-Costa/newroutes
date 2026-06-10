@@ -1,56 +1,98 @@
 package com.newroutes.app.ui.summary
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.newroutes.app.domain.model.Route
+import com.newroutes.app.domain.usecase.GetRoutesUseCase
+import com.newroutes.app.domain.usecase.SaveRouteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SummaryUiState(
-    val routeName: String = "",
-    val distanceText: String = "",
-    val durationText: String = "",
-    val totalCost: Double = 0.0,
-    val tollCost: Double = 0.0,
-    val fuelCost: Double = 0.0,
-    val waypoints: List<SummaryWaypoint> = emptyList(),
-    val tolls: List<SummaryToll> = emptyList(),
+    val route: Route? = null,
+    val isLoading: Boolean = true,
     val isSaved: Boolean = false,
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
-
-data class SummaryWaypoint(
-    val name: String = "",
-    val address: String = "",
-    val order: Int = 0
-)
-
-data class SummaryToll(
-    val name: String = "",
-    val highway: String = "",
-    val cost: Double = 0.0
+    val isSaving: Boolean = false,
+    val error: String? = null
 )
 
 @HiltViewModel
-class SummaryViewModel @Inject constructor() : ViewModel() {
+class SummaryViewModel @Inject constructor(
+    getRoutesUseCase: GetRoutesUseCase,
+    private val saveRouteUseCase: SaveRouteUseCase,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
     private val _uiState = MutableStateFlow(SummaryUiState())
     val uiState: StateFlow<SummaryUiState> = _uiState.asStateFlow()
 
-    // TODO: Carregar dados do resumo da rota
-    fun loadRouteSummary(routeId: String) {
+    private val routeIdString: String = savedStateHandle["routeId"] ?: ""
+
+    init {
         viewModelScope.launch {
-            // TODO: Carregar dados da rota para exibição
+            getRoutesUseCase.invoke()
+                .collect { routes ->
+                    val found = routes.find { it.id.toString() == routeIdString }
+                    if (found != null) {
+                        _uiState.update {
+                            it.copy(
+                                route = found,
+                                isLoading = false
+                            )
+                        }
+                    } else if (!_uiState.value.isLoading) {
+                        // Already collected, route not found
+                    } else {
+                        _uiState.update {
+                            it.copy(isLoading = false)
+                        }
+                    }
+                }
+        }
+
+        // Check if route was already found during collection
+        viewModelScope.launch {
+            _uiState.collect { state ->
+                if (!state.isLoading && state.route == null && routeIdString.isNotEmpty()) {
+                    _uiState.update {
+                        it.copy(error = "Rota não encontrada")
+                    }
+                }
+            }
         }
     }
 
-    // TODO: Salvar rota calculada
+    /**
+     * Salva a rota atual usando SaveRouteUseCase.
+     */
     fun saveRoute() {
+        val route = _uiState.value.route ?: return
         viewModelScope.launch {
-            // TODO: Salvar rota no repository
+            _uiState.update { it.copy(isSaving = true) }
+            saveRouteUseCase.invoke(route)
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(isSaving = false, isSaved = true)
+                    }
+                }
+                .onFailure { exception ->
+                    _uiState.update {
+                        it.copy(isSaving = false, error = exception.message)
+                    }
+                }
         }
+    }
+
+    /**
+     * Limpa o campo de erro atual.
+     */
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 }

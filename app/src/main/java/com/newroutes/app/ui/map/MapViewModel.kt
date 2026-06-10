@@ -1,56 +1,208 @@
 package com.newroutes.app.ui.map
 
-// TODO: ViewModel da tela de mapa
-// Deve gerenciar: posição do mapa, markers de waypoints, estado de loading
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.newroutes.app.data.geocoding.NominatimRepository
+import com.newroutes.app.domain.model.Route
+import com.newroutes.app.domain.model.Vehicle
+import com.newroutes.app.domain.model.Waypoint
+import com.newroutes.app.domain.usecase.CalculateRouteUseCase
+import com.newroutes.app.domain.usecase.SaveRouteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MapUiState(
-    val centerLat: Double = -14.235,
-    val centerLng: Double = -51.9253,
-    val zoom: Float = 4f,
-    val waypoints: List<WaypointUi> = emptyList(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
-
-data class WaypointUi(
-    val id: String = "",
-    val lat: Double = 0.0,
-    val lng: Double = 0.0,
-    val name: String = "",
-    val order: Int = 0
+    val searchQuery: String = "",
+    val searchResults: List<Waypoint> = emptyList(),
+    val isSearching: Boolean = false,
+    val selectedOrigin: Waypoint? = null,
+    val selectedDestination: Waypoint? = null,
+    val intermediateWaypoints: List<Waypoint> = emptyList(),
+    val selectedVehicle: Vehicle? = null,
+    val currentRoute: Route? = null,
+    val encodedPolyline: String? = null,
+    val isCalculatingRoute: Boolean = false,
+    val error: String? = null
 )
 
 @HiltViewModel
-class MapViewModel @Inject constructor() : ViewModel() {
+class MapViewModel @Inject constructor(
+    private val nominatimRepository: NominatimRepository,
+    private val calculateRouteUseCase: CalculateRouteUseCase,
+    private val saveRouteUseCase: SaveRouteUseCase
+) : ViewModel() {
+
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
-    // TODO: Centralizar mapa em posição
-    fun animateTo(lat: Double, lng: Double) {
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+    }
+
+    /**
+     * Busca localidades usando Nominatim a partir de uma consulta de texto.
+     */
+    fun searchPlaces(query: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(centerLat = lat, centerLng = lng)
+            _uiState.update { it.copy(isSearching = true) }
+            nominatimRepository.searchPlaces(query)
+                .onSuccess { results ->
+                    _uiState.update {
+                        it.copy(
+                            searchResults = results,
+                            isSearching = false
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    _uiState.update {
+                        it.copy(
+                            error = exception.message,
+                            isSearching = false
+                        )
+                    }
+                }
         }
     }
 
-    // TODO: Adicionar waypoint ao mapa
-    fun addWaypoint(lat: Double, lng: Double, name: String) {
-        viewModelScope.launch {
-            // TODO: Adicionar waypoint à lista
+    /**
+     * Seleciona um waypoint como origem da rota e limpa os resultados da busca.
+     */
+    fun selectOrigin(waypoint: Waypoint) {
+        _uiState.update {
+            it.copy(
+                selectedOrigin = waypoint,
+                searchResults = emptyList()
+            )
         }
     }
 
-    // TODO: Remover waypoint do mapa
-    fun removeWaypoint(id: String) {
+    /**
+     * Seleciona um waypoint como destino da rota e limpa os resultados da busca.
+     */
+    fun selectDestination(waypoint: Waypoint) {
+        _uiState.update {
+            it.copy(
+                selectedDestination = waypoint,
+                searchResults = emptyList()
+            )
+        }
+    }
+
+    /**
+     * Adiciona um waypoint intermediário à lista de paradas.
+     */
+    fun addIntermediateWaypoint(waypoint: Waypoint) {
+        _uiState.update {
+            it.copy(
+                intermediateWaypoints = it.intermediateWaypoints + waypoint
+            )
+        }
+    }
+
+    /**
+     * Remove um waypoint intermediário da lista de paradas.
+     */
+    fun removeIntermediateWaypoint(waypoint: Waypoint) {
+        _uiState.update {
+            it.copy(
+                intermediateWaypoints = it.intermediateWaypoints - waypoint
+            )
+        }
+    }
+
+    /**
+     * Calcula a rota entre origem e destino (com paradas intermediárias),
+     * usando CalculateRouteUseCase para orquestrar o cálculo.
+     */
+    fun calculateRoute() {
+        val state = _uiState.value
+        if (state.selectedOrigin == null || state.selectedDestination == null) return
+
         viewModelScope.launch {
-            // TODO: Remover waypoint da lista
+            _uiState.update { it.copy(isCalculatingRoute = true, error = null) }
+
+            val waypoints = buildList {
+                add(state.selectedOrigin!!)
+                addAll(state.intermediateWaypoints)
+                add(state.selectedDestination!!)
+            }
+
+            calculateRouteUseCase.invoke(waypoints, state.selectedVehicle)
+                .onSuccess { route ->
+                    _uiState.update {
+                        it.copy(
+                            currentRoute = route,
+                            encodedPolyline = route.waypoints.getOrNull(route.waypoints.size - 1)?.let { wp ->
+                                wp.latitude.toString() + "," + wp.longitude.toString()
+                            },
+                            isCalculatingRoute = false
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    _uiState.update {
+                        it.copy(
+                            error = exception.message,
+                            isCalculatingRoute = false
+                        )
+                    }
+                }
+        }
+    }
+
+    /**
+     * Salva a rota atualmente calculada no estado.
+     */
+    fun saveCurrentRoute() {
+        val route = _uiState.value.currentRoute ?: return
+        viewModelScope.launch {
+            saveRouteUseCase.invoke(route)
+                .onFailure { exception ->
+                    _uiState.update {
+                        it.copy(error = exception.message)
+                    }
+                }
+        }
+    }
+
+    /**
+     * Limpa o campo de erro atual.
+     */
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Reseta todos os dados da rota: origem, destino, paradas intermediárias,
+     * rota atual e polyline codificada.
+     */
+    fun clearRoute() {
+        _uiState.update {
+            MapUiState()
+        }
+    }
+
+    /**
+     * Define o veículo selecionado a partir de uma configuração compartilhada.
+     */
+    fun setSelectedVehicle(vehicle: Vehicle) {
+        _uiState.update { it.copy(selectedVehicle = vehicle) }
+    }
+
+    /**
+     * Adiciona múltiplos waypoints intermediários de uma vez.
+     */
+    fun addIntermediateWaypoints(waypoints: List<Waypoint>) {
+        _uiState.update {
+            it.copy(
+                intermediateWaypoints = it.intermediateWaypoints + waypoints
+            )
         }
     }
 }
