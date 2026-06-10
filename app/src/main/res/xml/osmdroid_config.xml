@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Configuração do OSMDroid -->
+    <bool name="osmdroid_enable_pathfind">true</bool>
+    <bool name="osmdroid_show_tilt_indicator">true</bool>
+    <string name="osmdroid_base_path" translatable="false">/osmdroid</string>
+    <string name="osmdroid_tiles_path" translatable="false">/osmdroid/tiles</string>
+    <string name="osmdroid_cache_path" translatable="false">/osmdroid/cache</string>
+    <string name="osmdroid_errortiles_path" translatable="false">/osmdroid/error</string>
+    <string name="osmdroid_icon_path" translatable="false">/osmdroid/icon</string>
+</resources>

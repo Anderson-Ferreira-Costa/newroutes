@@ -1,0 +1,97 @@
+# Gradle
+/.gradle/
+/local.properties/
+/.idea/
+/*.iml
+/modules.gradle
+/.gradle-build-actions
+
+# Android Studio
+/.android/
+/build/
+/.captures
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/deployment.xml
+/.idea/markdown.xml
+/.idea/misc.xml
+
+# Android / Gradle
+/app/build/
+/app/.cxx/
+/*.keystore
+/*.p12
+/*.jks
+/debug.keystore
+
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+gen/
+out/
+/bin/
+
+# Gradle wrapper
+gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+/target/
+*.jar
+*.war
+*.ear
+
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+.project
+.classpath
+
+# Android
+local.properties
+.idea/
+*.iml
+*.iws
+*.ipr
+Android/
+
+# NDK
+obj/
+
+# ProGuard
+proguard/
+
+# Temporary file crash
+*.log*
+
+# Android Profiling
+*.hprof
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Keystore files (never commit)
+*.keystore
+*.p12
+*.jks
+
+# Debug signing
+debug.keystore
