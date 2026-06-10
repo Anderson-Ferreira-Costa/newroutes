@@ -1,15 +1,16 @@
 package com.newroutes.app.data.routing
 
+import com.newroutes.app.BuildConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Named
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
-import com.newroutes.app.BuildConfig
 
 /**
  * Módulo Hilt para prover as dependências da camada de roteamento (OSRM).
