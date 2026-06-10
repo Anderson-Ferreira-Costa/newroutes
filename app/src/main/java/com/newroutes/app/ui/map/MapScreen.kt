@@ -1,5 +1,10 @@
 package com.newroutes.app.ui.map
 
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color as AndroidColor
+import android.graphics.Paint
+import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +28,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,24 +54,23 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.newroutes.app.domain.model.Waypoint
 import com.newroutes.app.domain.model.Route
-
-data class SharedRouteConfig(
-    var waypoints: List<Waypoint> = emptyList(),
-    var vehicle: com.newroutes.app.domain.model.Vehicle? = null
-)
+import com.newroutes.app.domain.model.Waypoint
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.ItemizedIconOverlay
 import org.osmdroid.views.overlay.Overlay
-import android.content.Context
-import android.graphics.Color as AndroidColor
-import androidx.core.content.ContextCompat
 
+data class SharedRouteConfig(
+    var waypoints: List<Waypoint> = emptyList(),
+    var vehicle: com.newroutes.app.domain.model.Vehicle? = null
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     onNavigateToSummary: (Route) -> Unit,
@@ -72,7 +78,7 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState
+    val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(sharedConfig) {
@@ -117,12 +123,15 @@ fun MapScreen(
             update = { mapView ->
                 mapView.overlays.clear()
 
+                val waypointsWithIcons = mutableListOf<Pair<Waypoint, Int>>()
                 uiState.selectedOrigin?.let { waypoint ->
-                    mapView.overlays.add(createMarker(mapView.context, waypoint, android.R.drawable.star_big_on))
+                    waypointsWithIcons.add(waypoint to android.R.drawable.star_big_on)
                 }
-
                 uiState.selectedDestination?.let { waypoint ->
-                    mapView.overlays.add(createMarker(mapView.context, waypoint, android.R.drawable.pin_dark))
+                    waypointsWithIcons.add(waypoint to android.R.drawable.sym_def_app_icon)
+                }
+                if (waypointsWithIcons.isNotEmpty()) {
+                    mapView.overlays.add(createMarkersOverlay(mapView.context, waypointsWithIcons))
                 }
 
                 uiState.encodedPolyline?.let { polyline ->
@@ -388,21 +397,61 @@ private fun Button(
     }
 }
 
-private fun createMarker(context: Context, waypoint: Waypoint, drawableRes: Int): ItemizedIconOverlay<com.osmdroid.views.overlay.Marker> {
-    val icon = ContextCompat.getDrawable(context, drawableRes)
-    val marker = com.osmdroid.views.overlay.Marker(MapView(context)).apply {
-        position = GeoPoint(waypoint.latitude, waypoint.longitude)
-        setIcon(icon)
-        title = waypoint.name
+private fun createMarkersOverlay(context: Context, waypointsWithIcons: List<Pair<Waypoint, Int>>): Overlay {
+    return object : Overlay() {
+        override fun draw(c: Canvas?, mapView: MapView?, shadow: Boolean) {
+            if (shadow || c == null || mapView == null) return
+            val projection = mapView.projection
+            if (projection == null) return
+            for ((waypoint, drawableRes) in waypointsWithIcons) {
+                val geoPoint = GeoPoint(waypoint.latitude, waypoint.longitude)
+                val pixel = projection.toPixels(geoPoint, null) ?: continue
+                val icon = ContextCompat.getDrawable(context, drawableRes) ?: continue
+                val iconWidth = icon.intrinsicWidth.takeIf { it > 0 } ?: 32
+                val iconHeight = icon.intrinsicHeight.takeIf { it > 0 } ?: 48
+                icon.setBounds(
+                    pixel.x - iconWidth / 2,
+                    pixel.y - iconHeight,
+                    pixel.x + iconWidth / 2,
+                    pixel.y
+                )
+                icon.draw(c)
+                val textPaint = Paint().apply {
+                    color = AndroidColor.BLACK
+                    textSize = 32f
+                    isAntiAlias = true
+                    textAlign = Paint.Align.CENTER
+                }
+                val bounds = Rect()
+                textPaint.getTextBounds(waypoint.name, 0, waypoint.name.length, bounds)
+                val textX = pixel.x.toFloat()
+                val textY = pixel.y.toFloat() - iconHeight - 8f
+                c.drawText(waypoint.name, textX, textY, textPaint)
+            }
+        }
     }
-    val list = listOf(marker)
-    return ItemizedIconOverlay(list, marker) { /* no onclick needed */ }
 }
 
 private fun createPolylineOverlay(points: List<GeoPoint>): Overlay {
-    return object : Overlay(points) {
-        override fun onDraw(p0: android.graphics.Canvas?, p1: org.osmdroid.api.IGeoPoint?, p2: org.osmdroid.views.Projection?) {
-            super.onDraw(p0, p1, p2)
+    return object : Overlay() {
+        override fun draw(c: android.graphics.Canvas?, mapView: MapView?, shadow: Boolean) {
+            super.draw(c, mapView, shadow)
+            if (shadow || c == null || points.size < 2) return
+            val projection = mapView?.projection
+            if (projection == null) return
+            val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                strokeWidth = 8f
+                color = AndroidColor.parseColor("#3F51B5")
+                style = android.graphics.Paint.Style.STROKE
+            }
+            for (i in 0 until points.size - 1) {
+                val from = projection.toPixels(points[i], null)
+                val to = projection.toPixels(points[i + 1], null)
+                if (from != null && to != null) {
+                    c.drawLine(from.x.toFloat(), from.y.toFloat(), to.x.toFloat(), to.y.toFloat(), paint)
+                }
+            }
         }
     }
 }

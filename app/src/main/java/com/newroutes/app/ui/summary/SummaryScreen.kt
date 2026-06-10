@@ -15,7 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.LocalShipping
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Circle
@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,8 +63,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.model.TollCategory
+import com.newroutes.app.domain.model.TollPlaza
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SummaryScreen(
     routeId: String,
@@ -70,7 +74,7 @@ fun SummaryScreen(
     modifier: Modifier = Modifier,
     viewModel: SummaryViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState
+    val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.error) {
@@ -389,7 +393,7 @@ private fun getVehicleIcon(category: TollCategory): ImageVector {
         TollCategory.TRUCK_3_AXLES,
         TollCategory.TRUCK_4_AXLES,
         TollCategory.TRUCK_5_AXLES,
-        TollCategory.TRUCK_6_AXLES -> Icons.AutoMirrored.Filled.LocalShipping
+        TollCategory.TRUCK_6_AXLES -> Icons.Default.LocalShipping
         TollCategory.BUS -> Icons.Default.DirectionsBus
     }
 }
@@ -450,7 +454,7 @@ private fun ItineraryCard(route: Route) {
                         modifier = Modifier.padding(top = 2.dp)
                     ) {
                         Icon(
-                            icon = when (index) {
+                            imageVector = when (index) {
                                 0 -> Icons.Default.RadioButtonChecked
                                 route.waypoints.size - 1 -> Icons.Default.LocationOn
                                 else -> Icons.Default.Circle

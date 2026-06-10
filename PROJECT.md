@@ -154,3 +154,10 @@ app/
 - No nested LazyColumn — items() direto no LazyColumn pai para pedágios
 - Divider vertical entre waypoints do itinerário (conector visual)
 - SavedStateHandle["routeId"] para recuperar ID da rota via Navigation Compose
+
+### Sessão 10 — Correções pós-build
+- DomainModule.kt criado em domain/usecase/ — @Provides para UseCases
+  (Hilt não injeta UseCases automaticamente sem binding explícito)
+- Markers OSMDroid via Canvas customizado (createMarkersOverlay)
+  TODO: substituir por Marker nativo do OSMDroid
+- collectAsState() obrigatório para StateFlow em Compose

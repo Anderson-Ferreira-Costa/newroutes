@@ -2,6 +2,7 @@ package com.newroutes.app.domain.usecase
 
 import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.repository.IRouteRepository
+
 import kotlinx.coroutines.flow.Flow
 
 /**

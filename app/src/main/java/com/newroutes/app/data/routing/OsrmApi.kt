@@ -1,6 +1,7 @@
 package com.newroutes.app.data.routing
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**

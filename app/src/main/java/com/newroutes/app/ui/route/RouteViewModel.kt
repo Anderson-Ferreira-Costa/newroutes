@@ -52,6 +52,10 @@ class RouteViewModel @Inject constructor(
      * Busca localidades usando Nominatim e exibe os resultados para seleção.
      * O usuário deve clicar no resultado para adicionar como waypoint.
      */
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+    }
+
     fun searchPlaces(query: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true) }
@@ -104,7 +108,7 @@ class RouteViewModel @Inject constructor(
                 newWaypoints[from] = newWaypoints[to]
                 newWaypoints[to] = temp
             }
-            it.copy(waypoints = newWaypoints)
+            state.copy(waypoints = newWaypoints)
         }
     }
 

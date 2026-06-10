@@ -53,7 +53,7 @@ class TollRepository(
     ): List<TollPlaza> {
         val results = mutableListOf<TollPlazaEntity>()
 
-        for (i in waypoints.indices.dropLast(1)) {
+        for (i in 0 until (waypoints.size - 1)) {
             val current = waypoints[i]
             val next = waypoints[i + 1]
 
