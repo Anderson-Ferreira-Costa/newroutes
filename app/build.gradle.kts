@@ -98,6 +98,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51.1")
     ksp("com.google.dagger:hilt-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("javax.inject:javax.inject:1")
 
     // ---- Room (Local Persistence) ----
     implementation("androidx.room:room-runtime:2.6.1")
