@@ -162,8 +162,21 @@ app/
   TODO: substituir por Marker nativo do OSMDroid
 - collectAsState() obrigatório para StateFlow em Compose
 
+### Sessão 11 — Correções pós-build
+
+- Moshi deserialização de `List<T>`: `GeocodingModule.kt` e `RoutingModule.kt`
+  atualizados com `Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()`
+- Nominatim 403: User-Agent corrigido para `"NewRoutes/1.0 (newroutes@example.com)"`
+  (sem `contato:` — Nominatim rejeita strings genéricas)
+- Accept-Language: header `pt-BR,pt;q=0.9` adicionado ao interceptor
+- Ordem dos interceptors: User-Agent antes do logging interceptor na cadeia
+
 ## Bug fixes pós-build
 - GeocodingModule e RoutingModule: `MoshiConverterFactory.create()` sem instância
   de Moshi não deserializa `List<T>` de data classes Kotlin
   Correção: `Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()`
   Dependência: `moshi-kotlin:1.15.2`
+- GeocodingModule: Nominatim retorna 403 quando User-Agent não contém identificação
+  ou interceptor vem após logging interceptor
+  Correção: `"NewRoutes/1.0 (email)"` + `Accept-Language: pt-BR,pt;q=0.9` +
+  ordem User-Agent → logging
