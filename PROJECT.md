@@ -222,6 +222,12 @@ app/
 - PhotonResponse era `typealias = List<PhotonFeature>` mas API retorna `{type:"FeatureCollection",features:[...]}`
   Correção: data class PhotonResponse com field `features: List<PhotonFeature>` + PhotonGeometry/PhotonProperties
 
+## Status: MVP funcional
+- Geocoding: Photon (komoot.io) — lang=default, bbox Brasil
+- Roteamento: OSRM público — polilinha decodificada corretamente
+- Cálculo de custo: combustível funcional (pedágios aguardam seed ANTT)
+- decodePolyline: versão final com guarda index < len nos do/while internos
+
 ## Bug fixes pós-build
 - GeocodingModule e RoutingModule: `MoshiConverterFactory.create()` sem instância
   de Moshi não deserializa `List<T>` de data classes Kotlin
