@@ -183,6 +183,8 @@ app/
 - Photon API: bbox limita resultados ao Brasil (`-73.98,-33.75,-34.79,5.27`)
 - DTO GeoJSON: `PhotonFeature(geometry.coordinates: [lon, lat], properties: {name, country, state, locality, postcode})`
 - Photon não suporta `lang=pt` — corrigido para `lang=default` (nomes locais, Brasil → português)
+- PhotonResponse era `typealias = List<PhotonFeature>` mas API retorna `{type:"FeatureCollection",features:[...]}`
+  Correção: data class PhotonResponse com field `features: List<PhotonFeature>` + PhotonGeometry/PhotonProperties
 
 ## Bug fixes pós-build
 - GeocodingModule e RoutingModule: `MoshiConverterFactory.create()` sem instância
