@@ -165,9 +165,7 @@ class MapViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             currentRoute = route,
-                            encodedPolyline = route.waypoints.getOrNull(route.waypoints.size - 1)?.let { wp ->
-                                wp.latitude.toString() + "," + wp.longitude.toString()
-                            },
+                            encodedPolyline = route.encodedPolyline,
                             isCalculatingRoute = false
                         )
                     }

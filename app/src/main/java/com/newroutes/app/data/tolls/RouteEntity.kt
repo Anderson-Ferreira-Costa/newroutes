@@ -27,6 +27,7 @@ data class RouteEntity(
     val waypointsJson: String,
     val tollPlazasJson: String,
     val vehicleJson: String,
+    val encodedPolyline: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /**
@@ -41,7 +42,8 @@ data class RouteEntity(
         totalCost = totalCost,
         waypoints = convertToWaypoints(waypointsJson),
         tollPlazas = convertToTollPlazas(tollPlazasJson),
-        vehicle = convertToVehicle(vehicleJson)
+        vehicle = convertToVehicle(vehicleJson),
+        encodedPolyline = encodedPolyline
     )
 
     companion object {
@@ -57,7 +59,8 @@ data class RouteEntity(
             totalCost = route.totalCost,
             waypointsJson = convertFromWaypoints(route.waypoints),
             tollPlazasJson = convertFromTollPlazas(route.tollPlazas),
-            vehicleJson = convertFromVehicle(route.vehicle)
+            vehicleJson = convertFromVehicle(route.vehicle),
+            encodedPolyline = route.encodedPolyline
         )
 
         private fun convertFromWaypoints(list: List<Waypoint>): String {

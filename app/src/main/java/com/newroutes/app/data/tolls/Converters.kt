@@ -8,6 +8,7 @@ import com.newroutes.app.domain.model.Waypoint
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.util.UUID
 
 /**
@@ -17,7 +18,9 @@ import java.util.UUID
  */
 class Converters {
 
-    private val moshi: Moshi = Moshi.Builder().build()
+    private val moshi: Moshi = Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
 
     // ── UUID ──────────────────────────────────────────────────────────
 

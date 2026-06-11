@@ -56,6 +56,7 @@ class CalculateRouteUseCase(
 
             val distanceMeters = osrmResult.distanceMeters
             val durationSeconds = osrmResult.durationSeconds
+            val polyline = osrmResult.encodedPolyline
 
             val totalFuelCost = calculateFuelCost(
                 distanceMeters = distanceMeters,
@@ -71,7 +72,8 @@ class CalculateRouteUseCase(
                 vehicle = v,
                 totalTollCost = totalTollCost,
                 totalFuelCost = totalFuelCost,
-                totalCost = totalTollCost + totalFuelCost
+                totalCost = totalTollCost + totalFuelCost,
+                encodedPolyline = polyline
             )
         }
     }

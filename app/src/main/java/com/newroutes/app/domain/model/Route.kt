@@ -15,7 +15,8 @@ data class Route(
     val vehicle: Vehicle,
     val totalTollCost: Double,
     val totalFuelCost: Double,
-    val totalCost: Double
+    val totalCost: Double,
+    val encodedPolyline: String? = null
 ) {
     init {
         require(waypoints.size >= 2) { "Uma rota deve ter pelo menos 2 waypoints" }

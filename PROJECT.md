@@ -171,6 +171,16 @@ app/
 - Accept-Language: header `pt-BR,pt;q=0.9` adicionado ao interceptor
 - Ordem dos interceptors: User-Agent antes do logging interceptor na cadeia
 
+### Sessão 16 — Correções pós-build
+- Converters.kt: Moshi sem KotlinJsonAdapterFactory causava "Cannot serialize Kotlin type Waypoint"
+  Correção: Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+- Polilinha não aparecia no mapa:
+  Route sem campo encodedPolyline → UseCase descartava geometry do OSRM
+  MapViewModel setava "lat,lon" do último waypoint como polyline (string inválida)
+  Fluxo: OsrmRoute.geometry → OsrmRepository.encodedPolyline → UseCase → Route.encodedPolyline → MapViewModel.encodedPolyline
+  Correção: adicionar encodedPolyline: String? = null em Route, RouteEntity, passar pelo UseCase
+- MapViewModel.kt: encodedPolyline = route.waypoints.last() → encodedPolyline = route.encodedPolyline
+
 ### Sessão 15 — Correções pós-build
 - MapScreen decodePolyline(): StringIndexOutOfBoundsException e polilinha invertida
   Antiga: acumulava `lat = lat or (...)` sem deslocamento, não tratava sinal negativo,
