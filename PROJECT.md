@@ -182,6 +182,7 @@ app/
 - `MapViewModel.kt` + `RouteViewModel.kt`: `NominatimRepository` → `PhotonRepository`
 - Photon API: bbox limita resultados ao Brasil (`-73.98,-33.75,-34.79,5.27`)
 - DTO GeoJSON: `PhotonFeature(geometry.coordinates: [lon, lat], properties: {name, country, state, locality, postcode})`
+- Photon suporta apenas lang: default, de, en, fr — usar `lang=en` (não `pt`)
 
 ## Bug fixes pós-build
 - GeocodingModule e RoutingModule: `MoshiConverterFactory.create()` sem instância

@@ -46,7 +46,7 @@ class PhotonRepository(
     /**
      * Converte um PhotonFeature em Waypoint do domínio.
      *
-     * - name: nome do local + cidade/estado, truncado em 60 caracteres
+     * - name: nome do local + cidade/estado (en), truncado em 60 caracteres
      * - address: nome do local + país/estado
      * - lat/lon: extraídos do array GeoJSON [lon, lat]
      */
