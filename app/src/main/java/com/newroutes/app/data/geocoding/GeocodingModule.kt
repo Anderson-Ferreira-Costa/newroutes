@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
@@ -63,7 +65,11 @@ object GeocodingModule {
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://nominatim.openstreetmap.org/")
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(
+                Moshi.Builder()
+                    .addLast(KotlinJsonAdapterFactory())
+                    .build()
+            ))
             .client(okHttpClient)
             .build()
     }

@@ -161,3 +161,9 @@ app/
 - Markers OSMDroid via Canvas customizado (createMarkersOverlay)
   TODO: substituir por Marker nativo do OSMDroid
 - collectAsState() obrigatório para StateFlow em Compose
+
+## Bug fixes pós-build
+- GeocodingModule e RoutingModule: `MoshiConverterFactory.create()` sem instância
+  de Moshi não deserializa `List<T>` de data classes Kotlin
+  Correção: `Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()`
+  Dependência: `moshi-kotlin:1.15.2`
