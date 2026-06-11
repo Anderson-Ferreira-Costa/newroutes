@@ -17,13 +17,13 @@ interface PhotonApi {
      * Busca lugares a partir de uma consulta de texto.
      *
      * - bbox limita resultados ao Brasil (wswng: -73.98,-33.75,-34.79,5.27)
-     * - lang=en (Photon suporta apenas: default, de, en, fr)
+     * - lang=default retorna nomes locais (Brasil → português)
      */
     @GET("/api")
     suspend fun search(
         @Query("q") query: String,
         @Query("limit") limit: Int = 5,
-        @Query("lang") lang: String = "en",
+        @Query("lang") lang: String = "default",
         @Query("bbox") bbox: String = "-73.98,-33.75,-34.79,5.27"
     ): PhotonResponse
 
