@@ -592,6 +592,7 @@ private fun decodePolyline(encoded: String): List<GeoPoint> {
         var shift = 0
         var result = 0
         do {
+            if (index >= len) return poly
             b = encoded[index++].code - 63
             result = result or (b and 0x1f shl shift)
             shift += 5
@@ -602,6 +603,7 @@ private fun decodePolyline(encoded: String): List<GeoPoint> {
         shift = 0
         result = 0
         do {
+            if (index >= len) return poly
             b = encoded[index++].code - 63
             result = result or (b and 0x1f shl shift)
             shift += 5
