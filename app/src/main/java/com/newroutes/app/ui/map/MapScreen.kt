@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -81,6 +82,7 @@ data class SharedRouteConfig(
 @Composable
 fun MapScreen(
     onNavigateToSummary: (Route) -> Unit,
+    onNavigateToVehicle: () -> Unit,
     sharedConfig: SharedRouteConfig,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = hiltViewModel()
@@ -164,6 +166,25 @@ fun MapScreen(
                 map.invalidate()
             }
         )
+
+        IconButton(
+            onClick = onNavigateToVehicle,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                Icons.Default.DirectionsCar,
+                contentDescription = "Veículos",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        RoundedCornerShape(12.dp)
+                    )
+                    .padding(8.dp)
+            )
+        }
 
         Column(
             modifier = Modifier

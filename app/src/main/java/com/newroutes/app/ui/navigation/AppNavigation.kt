@@ -10,11 +10,13 @@ import com.newroutes.app.ui.map.MapScreen
 import com.newroutes.app.ui.map.SharedRouteConfig
 import com.newroutes.app.ui.route.RouteScreen
 import com.newroutes.app.ui.summary.SummaryScreen
+import com.newroutes.app.ui.vehicle.VehicleScreen
 
 sealed class Screen(val route: String) {
     object Map : Screen("map")
     object Route : Screen("route")
     object Summary : Screen("summary/{routeId}")
+    object Vehicle : Screen("vehicle")
 }
 
 @Composable
@@ -33,6 +35,9 @@ fun AppNavigation(
             MapScreen(
                 onNavigateToSummary = { route ->
                     navController.navigate("summary/${route.id}")
+                },
+                onNavigateToVehicle = {
+                    navController.navigate(Screen.Vehicle.route)
                 },
                 sharedConfig = sharedConfig
             )
@@ -53,6 +58,13 @@ fun AppNavigation(
             val routeId = backStackEntry.arguments?.getString("routeId") ?: ""
             SummaryScreen(
                 routeId = routeId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Screen.Vehicle.route) {
+            VehicleScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

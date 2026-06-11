@@ -171,6 +171,25 @@ app/
 - Accept-Language: header `pt-BR,pt;q=0.9` adicionado ao interceptor
 - Ordem dos interceptors: User-Agent antes do logging interceptor na cadeia
 
+### Sessão 14 — ui/vehicle — Gerenciamento de veículos (concluída)
+- VehicleViewModel.kt: @HiltViewModel com ManageVehicleUseCase
+- VehicleUiState: vehicles, nome, categoria, consumo, preço, isDefault, flags
+- init coleta ManageVehicleUseCase.getAll() via Flow
+- saveVehicle(): valida campos, constrói Vehicle, salva via UseCase, setDefault se necessário
+- deleteVehicle(), setDefault(id), resetForm(), clearError()
+- VehicleScreen.kt: Scaffold com TopAppBar "Meus Veículos" + botão back
+- Lista de veículos: LazyColumn com Card por veículo, ícone por categoria, chip "Padrão"
+- SwipeToDismissBox (Material 3) para deletar — fundo vermelho + ícone lixeira
+- Formulário "Novo Veículo": TextField nome, LazyRow chips categoria, TextField consumo/preço
+- Switch "Definir como padrão" — desabilitado se lista vazia (primeiro é sempre padrão)
+- Button "Salvar veículo" com estado de loading (CircularProgressIndicator)
+- LaunchedEffect: limpa isSaved após 1500ms, reseta form se lista vazia
+- Categoria → ícone: MOTORCYCLE→TwoWheeler, CAR→DirectionsCar, BUS→DirectionsBus, TRUCK→LocalShipping
+- Categoria → label: "Carro", "Moto", "Caminhão 2 eixos", etc.
+- Categoria → placeholder consumo: TRUCK/BUS → 4.0/6.0, outros → 12.0
+- AppNavigation.kt: adicionado destino "vehicle" ao NavHost + Screen.Vehicle
+- MapScreen.kt: IconButton (DirectionsCar) no canto superior direito → navega para vehicle
+
 ### Sessão 13 — Correção de seleção de waypoints no MapScreen (concluída)
 - Problema: clique em resultado de busca não dava feedback visual
 - LaunchedEffect para animar mapa ao selecionar waypoint (animateTo + zoom 13)
