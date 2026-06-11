@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,13 +23,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,7 +48,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,6 +114,18 @@ fun MapScreen(
         }
     }
 
+    val mapView = remember { mutableStateOf<MapView?>(null) }
+
+    LaunchedEffect(uiState.selectedOrigin, uiState.selectedDestination) {
+        val waypoint = uiState.selectedOrigin ?: uiState.selectedDestination
+        val map = mapView.value ?: return@LaunchedEffect
+        waypoint?.let { wp ->
+            map.controller.animateTo(GeoPoint(wp.latitude, wp.longitude))
+            map.controller.setZoom(13.0)
+        }
+        viewModel.onSearchSelectionMade()
+    }
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -120,8 +139,9 @@ fun MapScreen(
                     controller.setCenter(GeoPoint(-15.0, -47.0))
                 }
             },
-            update = { mapView ->
-                mapView.overlays.clear()
+            update = { map ->
+                mapView.value = map
+                map.overlays.clear()
 
                 val waypointsWithIcons = mutableListOf<Pair<Waypoint, Int>>()
                 uiState.selectedOrigin?.let { waypoint ->
@@ -131,17 +151,17 @@ fun MapScreen(
                     waypointsWithIcons.add(waypoint to android.R.drawable.sym_def_app_icon)
                 }
                 if (waypointsWithIcons.isNotEmpty()) {
-                    mapView.overlays.add(createMarkersOverlay(mapView.context, waypointsWithIcons))
+                    map.overlays.add(createMarkersOverlay(map.context, waypointsWithIcons))
                 }
 
                 uiState.encodedPolyline?.let { polyline ->
                     val points = decodePolyline(polyline)
                     if (points.isNotEmpty()) {
-                        mapView.overlays.add(createPolylineOverlay(points))
+                        map.overlays.add(createPolylineOverlay(points))
                     }
                 }
 
-                mapView.invalidate()
+                map.invalidate()
             }
         )
 
@@ -155,6 +175,13 @@ fun MapScreen(
                 onQueryChanged = viewModel::onSearchQueryChanged,
                 onSearch = viewModel::searchPlaces,
                 onClear = { viewModel.onSearchQueryChanged("") }
+            )
+
+            SelectionChips(
+                selectedOrigin = uiState.selectedOrigin,
+                selectedDestination = uiState.selectedDestination,
+                onClearOrigin = viewModel::clearOrigin,
+                onClearDestination = viewModel::clearDestination
             )
 
             if (uiState.searchResults.isNotEmpty()) {
@@ -171,7 +198,8 @@ fun MapScreen(
                     items(uiState.searchResults, key = { it.id }) { waypoint ->
                         SearchResultItem(
                             waypoint = waypoint,
-                            hasOrigin = uiState.selectedOrigin != null,
+                            isOrigin = uiState.selectedOrigin?.id == waypoint.id,
+                            isDestination = uiState.selectedDestination?.id == waypoint.id,
                             onClick = {
                                 if (uiState.selectedOrigin == null) {
                                     viewModel.selectOrigin(waypoint)
@@ -218,6 +246,51 @@ fun MapScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+    }
+}
+
+@Composable
+private fun SelectionChips(
+    selectedOrigin: Waypoint?,
+    selectedDestination: Waypoint?,
+    onClearOrigin: () -> Unit,
+    onClearDestination: () -> Unit
+) {
+    if (selectedOrigin == null && selectedDestination == null) return
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        selectedOrigin?.let { wp ->
+            FilterChip(
+                selected = true,
+                onClick = onClearOrigin,
+                label = {
+                    Text("De: ${wp.name.take(30)}", maxLines = 1)
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(16.dp))
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        selectedDestination?.let { wp ->
+            FilterChip(
+                selected = true,
+                onClick = onClearDestination,
+                label = {
+                    Text("Para: ${wp.name.take(30)}", maxLines = 1)
+                },
+                leadingIcon = {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -281,13 +354,23 @@ private fun SearchBar(
 @Composable
 private fun SearchResultItem(
     waypoint: Waypoint,
-    hasOrigin: Boolean,
+    isOrigin: Boolean,
+    isDestination: Boolean,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .then(
+                if (isOrigin) {
+                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                } else if (isDestination) {
+                    Modifier.background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
+                } else {
+                    Modifier
+                }
+            )
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -295,14 +378,22 @@ private fun SearchResultItem(
         Icon(
             Icons.Default.LocationOn,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = when {
+                isOrigin -> MaterialTheme.colorScheme.primary
+                isDestination -> MaterialTheme.colorScheme.secondary
+                else -> MaterialTheme.colorScheme.primary
+            },
             modifier = Modifier.size(20.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = waypoint.name,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Black
+                color = when {
+                    isOrigin -> MaterialTheme.colorScheme.onPrimaryContainer
+                    isDestination -> MaterialTheme.colorScheme.onSecondaryContainer
+                    else -> Color.Black
+                }
             )
             if (waypoint.address.isNotBlank()) {
                 Text(
@@ -311,6 +402,10 @@ private fun SearchResultItem(
                     color = Color.Gray
                 )
             }
+        }
+        when {
+            isOrigin -> Icon(Icons.Default.Star, contentDescription = "Origem", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            isDestination -> Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Destino", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
         }
     }
 }

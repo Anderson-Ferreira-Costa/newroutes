@@ -171,6 +171,15 @@ app/
 - Accept-Language: header `pt-BR,pt;q=0.9` adicionado ao interceptor
 - Ordem dos interceptors: User-Agent antes do logging interceptor na cadeia
 
+### Sessão 13 — Correção de seleção de waypoints no MapScreen (concluída)
+- Problema: clique em resultado de busca não dava feedback visual
+- LaunchedEffect para animar mapa ao selecionar waypoint (animateTo + zoom 13)
+- LaunchedEffect limpa searchQuery e searchResults após seleção
+- SelectionChips: chips com "De: [nome]" e "Para: [nome]" clicáveis
+- SearchResultItem: destaque visual (background + ícone) para origem/destino
+- MapViewModel: métodos clearOrigin(), clearDestination(), onSearchSelectionMade()
+- Mapa centraliza e faz zoom no waypoint após seleção
+
 ### Sessão 12 — Migração Nominatim → Photon (concluída)
 - Geocoding migrado de Nominatim para Photon (Komoot)
 - Motivo: Nominatim bloqueia autocomplete/search client-side (403) —

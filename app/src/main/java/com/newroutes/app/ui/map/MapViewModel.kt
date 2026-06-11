@@ -44,6 +44,33 @@ class MapViewModel @Inject constructor(
         _uiState.update { it.copy(searchQuery = query) }
     }
 
+    fun onSearchSelectionMade() {
+        _uiState.update {
+            it.copy(
+                searchQuery = "",
+                searchResults = emptyList()
+            )
+        }
+    }
+
+    fun clearOrigin() {
+        _uiState.update {
+            it.copy(
+                selectedOrigin = null,
+                searchResults = emptyList()
+            )
+        }
+    }
+
+    fun clearDestination() {
+        _uiState.update {
+            it.copy(
+                selectedDestination = null,
+                searchResults = emptyList()
+            )
+        }
+    }
+
     /**
      * Busca localidades usando Photon a partir de uma consulta de texto.
      */
