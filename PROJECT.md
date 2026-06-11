@@ -171,6 +171,18 @@ app/
 - Accept-Language: header `pt-BR,pt;q=0.9` adicionado ao interceptor
 - Ordem dos interceptors: User-Agent antes do logging interceptor na cadeia
 
+### Sessão 12 — Migração Nominatim → Photon (concluída)
+- Geocoding migrado de Nominatim para Photon (Komoot)
+- Motivo: Nominatim bloqueia autocomplete/search client-side (403) —
+  explicitamente proibido pela política de uso público
+- Photon: `photon.komoot.io` — sem rate limit restritivo, aceita busca client-side
+- Novos arquivos: `PhotonPlace.kt` (DTO GeoJSON), `PhotonApi.kt`, `PhotonRepository.kt`
+- Arquivos removidos: `NominatimApi.kt`, `NominatimPlace.kt`, `NominatimRepository.kt`
+- `GeocodingModule.kt`: base URL → `https://photon.komoot.io/`, providers atualizados
+- `MapViewModel.kt` + `RouteViewModel.kt`: `NominatimRepository` → `PhotonRepository`
+- Photon API: bbox limita resultados ao Brasil (`-73.98,-33.75,-34.79,5.27`)
+- DTO GeoJSON: `PhotonFeature(geometry.coordinates: [lon, lat], properties: {name, country, state, locality, postcode})`
+
 ## Bug fixes pós-build
 - GeocodingModule e RoutingModule: `MoshiConverterFactory.create()` sem instância
   de Moshi não deserializa `List<T>` de data classes Kotlin
@@ -180,3 +192,5 @@ app/
   ou interceptor vem após logging interceptor
   Correção: `"NewRoutes/1.0 (email)"` + `Accept-Language: pt-BR,pt;q=0.9` +
   ordem User-Agent → logging
+- GeocodingModule: Nominatim bloqueia autocomplete/search client-side (política de uso)
+  Correção: migração completa para Photon API (`photon.komoot.io`)

@@ -2,7 +2,7 @@ package com.newroutes.app.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.newroutes.app.data.geocoding.NominatimRepository
+import com.newroutes.app.data.geocoding.PhotonRepository
 import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.model.Vehicle
 import com.newroutes.app.domain.model.Waypoint
@@ -32,7 +32,7 @@ data class MapUiState(
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val nominatimRepository: NominatimRepository,
+    private val photonRepository: PhotonRepository,
     private val calculateRouteUseCase: CalculateRouteUseCase,
     private val saveRouteUseCase: SaveRouteUseCase
 ) : ViewModel() {
@@ -45,12 +45,12 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Busca localidades usando Nominatim a partir de uma consulta de texto.
+     * Busca localidades usando Photon a partir de uma consulta de texto.
      */
     fun searchPlaces(query: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true) }
-            nominatimRepository.searchPlaces(query)
+            photonRepository.searchPlaces(query)
                 .onSuccess { results ->
                     _uiState.update {
                         it.copy(

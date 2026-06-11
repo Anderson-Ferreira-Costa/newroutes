@@ -16,15 +16,15 @@ import com.newroutes.app.BuildConfig
 /**
  * Módulo Hilt para prover as dependências da camada de geocoding.
  *
- * Configura: OkHttpClient com logging e interceptor User-Agent,
- * Retrofit com Moshi, NominatimApi e NominatimRepository.
+ * Configura: OkHttpClient com logging, Retrofit com Moshi, PhotonApi e PhotonRepository.
+ * Usa Photon (Komoot) ao invés do Nominatim — sem rate limit restritivo.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object GeocodingModule {
 
     /**
-     * Provê o OkHttpClient configurado para a API Nominatim.
+     * Provê o OkHttpClient configurado para a API Photon.
      *
      * - Logging: BODY em debug, NONE em release (BuildConfig.DEBUG)
      * - Header fixo: User-Agent com email, Accept-Language: pt-BR
@@ -56,16 +56,16 @@ object GeocodingModule {
     }
 
     /**
-     * Provê a instância do Retrofit configurada para a API Nominatim.
+     * Provê a instância do Retrofit configurada para a API Photon.
      *
-     * - Base URL: https://nominatim.openstreetmap.org/
+     * - Base URL: https://photon.komoot.io/
      * - Converter: MosConverterFactory
      * - Client: OkHttpClient fornecido por provideOkHttpClient()
      */
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://nominatim.openstreetmap.org/")
+            .baseUrl("https://photon.komoot.io/")
             .addConverterFactory(MoshiConverterFactory.create(
                 Moshi.Builder()
                     .addLast(KotlinJsonAdapterFactory())
@@ -76,18 +76,18 @@ object GeocodingModule {
     }
 
     /**
-     * Provê a instância de NominatimApi a partir do Retrofit.
+     * Provê a instância de PhotonApi a partir do Retrofit.
      */
     @Provides
-    fun provideNominatimApi(retrofit: Retrofit): NominatimApi {
-        return retrofit.create(NominatimApi::class.java)
+    fun providePhotonApi(retrofit: Retrofit): PhotonApi {
+        return retrofit.create(PhotonApi::class.java)
     }
 
     /**
-     * Provê o NominatimRepository com a dependência NominatimApi injetada.
+     * Provê o PhotonRepository com a dependência PhotonApi injetada.
      */
     @Provides
-    fun provideNominatimRepository(api: NominatimApi): NominatimRepository {
-        return NominatimRepository(api)
+    fun providePhotonRepository(api: PhotonApi): PhotonRepository {
+        return PhotonRepository(api)
     }
 }

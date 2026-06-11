@@ -2,7 +2,7 @@ package com.newroutes.app.ui.route
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.newroutes.app.data.geocoding.NominatimRepository
+import com.newroutes.app.data.geocoding.PhotonRepository
 import com.newroutes.app.domain.model.Vehicle
 import com.newroutes.app.domain.model.Waypoint
 import com.newroutes.app.domain.usecase.ManageVehicleUseCase
@@ -27,7 +27,7 @@ data class RouteUiState(
 @HiltViewModel
 class RouteViewModel @Inject constructor(
     private val manageVehicleUseCase: ManageVehicleUseCase,
-    private val nominatimRepository: NominatimRepository
+    private val photonRepository: PhotonRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RouteUiState())
@@ -49,7 +49,7 @@ class RouteViewModel @Inject constructor(
     }
 
     /**
-     * Busca localidades usando Nominatim e exibe os resultados para seleção.
+     * Busca localidades usando Photon e exibe os resultados para seleção.
      * O usuário deve clicar no resultado para adicionar como waypoint.
      */
     fun onSearchQueryChanged(query: String) {
@@ -59,7 +59,7 @@ class RouteViewModel @Inject constructor(
     fun searchPlaces(query: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true) }
-            nominatimRepository.searchPlaces(query)
+            photonRepository.searchPlaces(query)
                 .onSuccess { results ->
                     _uiState.update {
                         it.copy(
