@@ -268,28 +268,30 @@ fun VehicleScreen(
                         )
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    androidx.compose.material3.Button(
+                        onClick = { viewModel.saveVehicle() },
+                        enabled = !uiState.isSaving,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
                     ) {
                         if (uiState.isSaving) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(18.dp),
                                 strokeWidth = 2.dp
                             )
                             Text(
-                                text = "Salvando...",
+                                text = " Salvando...",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         } else {
                             Icon(
                                 Icons.Default.Save,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "Salvar veículo",
+                                text = " Salvar veículo",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }

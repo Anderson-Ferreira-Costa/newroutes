@@ -1,5 +1,6 @@
 package com.newroutes.app.ui.vehicle
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.newroutes.app.domain.model.TollCategory
@@ -86,6 +87,7 @@ class VehicleViewModel @Inject constructor(
      */
     fun saveVehicle() {
         val state = _uiState.value
+        Log.d("VehicleViewModel", "saveVehicle chamado — name=${state.name}, consumption=${state.fuelConsumption}, price=${state.fuelPrice}")
 
         if (state.name.isBlank()) {
             _uiState.update { it.copy(error = "Nome é obrigatório") }
