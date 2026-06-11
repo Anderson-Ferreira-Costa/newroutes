@@ -27,7 +27,7 @@ object GeocodingModule {
      * Provê o OkHttpClient configurado para a API Nominatim.
      *
      * - Logging: BODY em debug, NONE em release (BuildConfig.DEBUG)
-     * - Header fixo: User-Agent: NewRoutes/1.0
+     * - Header fixo: User-Agent com email, Accept-Language: pt-BR
      * - Timeout: 15s para connect, read e write
      */
     @Provides
@@ -41,13 +41,14 @@ object GeocodingModule {
         }
 
         return OkHttpClient.Builder()
-            .addInterceptor(logging)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
-                    .header("User-Agent", "NewRoutes/1.0 (contato: newroutes@example.com)")
+                    .header("User-Agent", "NewRoutes/1.0 (newroutes@example.com)")
+                    .header("Accept-Language", "pt-BR,pt;q=0.9")
                     .build()
                 chain.proceed(request)
             }
+            .addInterceptor(logging)
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
