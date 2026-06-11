@@ -171,6 +171,14 @@ app/
 - Accept-Language: header `pt-BR,pt;q=0.9` adicionado ao interceptor
 - Ordem dos interceptors: User-Agent antes do logging interceptor na cadeia
 
+### Sessão 15 — Correções pós-build
+- MapScreen decodePolyline(): StringIndexOutOfBoundsException e polilinha invertida
+  Antiga: acumulava `lat = lat or (...)` sem deslocamento, não tratava sinal negativo,
+  fator de conversão incorreto (* -0.0000001). Nova: decodificação Google Polyline v2
+  correta com dLat/dLng, inv() para sinal, / 1e5, guarda index < len
+- VehicleScreen Button "Salvar veículo": Row sem onClick nunca disparava saveVehicle()
+  Substituído por Button real com onClick = { viewModel.saveVehicle() }
+
 ### Sessão 14 — ui/vehicle — Gerenciamento de veículos (concluída)
 - VehicleViewModel.kt: @HiltViewModel com ManageVehicleUseCase
 - VehicleUiState: vehicles, nome, categoria, consumo, preço, isDefault, flags

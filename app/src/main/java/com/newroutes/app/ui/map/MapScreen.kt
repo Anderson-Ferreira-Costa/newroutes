@@ -581,7 +581,7 @@ private fun createPolylineOverlay(points: List<GeoPoint>): Overlay {
 }
 
 private fun decodePolyline(encoded: String): List<GeoPoint> {
-    val points = mutableListOf<GeoPoint>()
+    val poly = mutableListOf<GeoPoint>()
     var index = 0
     val len = encoded.length
     var lat = 0
@@ -590,25 +590,26 @@ private fun decodePolyline(encoded: String): List<GeoPoint> {
     while (index < len) {
         var b: Int
         var shift = 0
+        var result = 0
         do {
             b = encoded[index++].code - 63
-            lat = lat or (b and 0x1f shl shift)
+            result = result or (b and 0x1f shl shift)
             shift += 5
-        } while (b and 0x20 != 0)
+        } while (b >= 0x20)
+        val dLat = if (result and 1 != 0) (result shr 1).inv() else result shr 1
+        lat += dLat
 
         shift = 0
+        result = 0
         do {
             b = encoded[index++].code - 63
-            lng = lng or (b and 0x1f shl shift)
+            result = result or (b and 0x1f shl shift)
             shift += 5
-        } while (b and 0x20 != 0)
+        } while (b >= 0x20)
+        val dLng = if (result and 1 != 0) (result shr 1).inv() else result shr 1
+        lng += dLng
 
-        val latitude = (lat shr 1).toDouble() * -0.0000001
-        val longitude = (lng shr 1).toDouble() * -0.0000001
-        points.add(GeoPoint(latitude, longitude))
-        lat = 0
-        lng = 0
+        poly.add(GeoPoint(lat / 1e5, lng / 1e5))
     }
-
-    return points
+    return poly
 }
