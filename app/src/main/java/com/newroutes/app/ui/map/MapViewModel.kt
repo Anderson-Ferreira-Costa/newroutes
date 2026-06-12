@@ -17,9 +17,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MapUiState(
-    val searchQuery: String = "",
-    val searchResults: List<Waypoint> = emptyList(),
-    val isSearching: Boolean = false,
+    val originQuery: String = "",
+    val originResults: List<Waypoint> = emptyList(),
+    val isSearchingOrigin: Boolean = false,
+    val destinationQuery: String = "",
+    val destinationResults: List<Waypoint> = emptyList(),
+    val isSearchingDestination: Boolean = false,
     val selectedOrigin: Waypoint? = null,
     val selectedDestination: Waypoint? = null,
     val intermediateWaypoints: List<Waypoint> = emptyList(),
@@ -40,24 +43,20 @@ class MapViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
-    fun onSearchQueryChanged(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+    fun onOriginQueryChanged(query: String) {
+        _uiState.update { it.copy(originQuery = query) }
     }
 
-    fun onSearchSelectionMade() {
-        _uiState.update {
-            it.copy(
-                searchQuery = "",
-                searchResults = emptyList()
-            )
-        }
+    fun onDestinationQueryChanged(query: String) {
+        _uiState.update { it.copy(destinationQuery = query) }
     }
 
     fun clearOrigin() {
         _uiState.update {
             it.copy(
                 selectedOrigin = null,
-                searchResults = emptyList()
+                originQuery = "",
+                originResults = emptyList()
             )
         }
     }
@@ -66,23 +65,21 @@ class MapViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 selectedDestination = null,
-                searchResults = emptyList()
+                destinationQuery = "",
+                destinationResults = emptyList()
             )
         }
     }
 
-    /**
-     * Busca localidades usando Photon a partir de uma consulta de texto.
-     */
-    fun searchPlaces(query: String) {
+    fun searchOrigin(query: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isSearching = true) }
+            _uiState.update { it.copy(isSearchingOrigin = true) }
             photonRepository.searchPlaces(query)
                 .onSuccess { results ->
                     _uiState.update {
                         it.copy(
-                            searchResults = results,
-                            isSearching = false
+                            originResults = results,
+                            isSearchingOrigin = false
                         )
                     }
                 }
@@ -90,33 +87,68 @@ class MapViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             error = exception.message,
-                            isSearching = false
+                            isSearchingOrigin = false
                         )
                     }
                 }
         }
     }
 
-    /**
-     * Seleciona um waypoint como origem da rota e limpa os resultados da busca.
-     */
-    fun selectOrigin(waypoint: Waypoint) {
+    fun searchDestination(query: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearchingDestination = true) }
+            photonRepository.searchPlaces(query)
+                .onSuccess { results ->
+                    _uiState.update {
+                        it.copy(
+                            destinationResults = results,
+                            isSearchingDestination = false
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    _uiState.update {
+                        it.copy(
+                            error = exception.message,
+                            isSearchingDestination = false
+                        )
+                    }
+                }
+        }
+    }
+
+    fun selectOriginResult(waypoint: Waypoint) {
         _uiState.update {
             it.copy(
                 selectedOrigin = waypoint,
-                searchResults = emptyList()
+                originQuery = "",
+                originResults = emptyList()
             )
         }
     }
 
-    /**
-     * Seleciona um waypoint como destino da rota e limpa os resultados da busca.
-     */
-    fun selectDestination(waypoint: Waypoint) {
+    fun selectDestinationResult(waypoint: Waypoint) {
         _uiState.update {
             it.copy(
                 selectedDestination = waypoint,
-                searchResults = emptyList()
+                destinationQuery = "",
+                destinationResults = emptyList()
+            )
+        }
+    }
+
+    fun clearOriginSearchResults() {
+        _uiState.update {
+            it.copy(
+                originResults = emptyList()
+            )
+        }
+    }
+
+    fun clearDestinationSearchResults() {
+        _uiState.update {
+            it.copy(
+                destinationResults = emptyList()
             )
         }
     }

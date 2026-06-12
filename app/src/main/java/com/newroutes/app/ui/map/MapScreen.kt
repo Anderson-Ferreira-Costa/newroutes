@@ -141,7 +141,8 @@ fun MapScreen(
             map.controller.animateTo(GeoPoint(wp.latitude, wp.longitude))
             map.controller.setZoom(13.0)
         }
-        viewModel.onSearchSelectionMade()
+        viewModel.clearOriginSearchResults()
+        viewModel.clearDestinationSearchResults()
     }
 
     Box(
@@ -217,10 +218,10 @@ fun MapScreen(
 
             if (uiState.selectedOrigin == null || uiState.selectedDestination == null) {
                 SearchBar(
-                    query = uiState.searchQuery,
-                    onQueryChanged = viewModel::onSearchQueryChanged,
-                    onSearch = viewModel::searchPlaces,
-                    onClear = { viewModel.onSearchQueryChanged("") }
+                    query = uiState.originQuery,
+                    onQueryChanged = viewModel::onOriginQueryChanged,
+                    onSearch = viewModel::searchOrigin,
+                    onClear = { viewModel.onOriginQueryChanged("") }
                 )
 
                 SelectionChips(
@@ -230,7 +231,7 @@ fun MapScreen(
                     onClearDestination = viewModel::clearDestination
                 )
 
-                if (uiState.searchResults.isNotEmpty()) {
+                if (uiState.originResults.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -241,16 +242,16 @@ fun MapScreen(
                         contentPadding = PaddingValues(vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        items(uiState.searchResults, key = { it.id }) { waypoint ->
+                        items(uiState.originResults, key = { it.id }) { waypoint ->
                             SearchResultItem(
                                 waypoint = waypoint,
                                 isOrigin = uiState.selectedOrigin?.id == waypoint.id,
                                 isDestination = uiState.selectedDestination?.id == waypoint.id,
                                 onClick = {
                                     if (uiState.selectedOrigin == null) {
-                                        viewModel.selectOrigin(waypoint)
+                                        viewModel.selectOriginResult(waypoint)
                                     } else if (uiState.selectedDestination == null) {
-                                        viewModel.selectDestination(waypoint)
+                                        viewModel.selectDestinationResult(waypoint)
                                     } else {
                                         viewModel.addIntermediateWaypoint(waypoint)
                                     }
@@ -356,9 +357,6 @@ private fun BottomSheetSearchContent(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var expandedOrigin by remember { mutableStateOf(false) }
-    var expandedDestination by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -372,29 +370,59 @@ private fun BottomSheetSearchContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChanged,
-                    placeholder = { Text("Buscar origem ou destino...") },
+                    value = uiState.originQuery,
+                    onValueChange = viewModel::onOriginQueryChanged,
+                    placeholder = { Text("Origem") },
                     leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
-                        onSearch = { if (uiState.searchQuery.isNotBlank()) viewModel.searchPlaces(uiState.searchQuery) }
+                        onSearch = { if (uiState.originQuery.isNotBlank()) viewModel.searchOrigin(uiState.originQuery) }
                     ),
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
-                            expandedOrigin = true
-                            expandedDestination = false
-                            onSheetExpandedChanged(true)
+                            if (uiState.selectedOrigin != null) {
+                                viewModel.clearOrigin()
+                            } else {
+                                onSheetExpandedChanged(true)
+                            }
                         },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     ),
                     singleLine = true,
-                    readOnly = true
+                    readOnly = uiState.selectedOrigin != null
+                )
+
+                OutlinedTextField(
+                    value = uiState.destinationQuery,
+                    onValueChange = viewModel::onDestinationQueryChanged,
+                    placeholder = { Text("Destino") },
+                    leadingIcon = {
+                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { if (uiState.destinationQuery.isNotBlank()) viewModel.searchDestination(uiState.destinationQuery) }
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            if (uiState.selectedDestination != null) {
+                                viewModel.clearDestination()
+                            } else {
+                                onSheetExpandedChanged(true)
+                            }
+                        },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    singleLine = true,
+                    readOnly = uiState.selectedDestination != null
                 )
             }
 
@@ -450,91 +478,155 @@ private fun BottomSheetSearchContent(
                 }
             }
 
-            OutlinedTextField(
-                value = uiState.searchQuery,
-                onValueChange = viewModel::onSearchQueryChanged,
-                placeholder = { Text("Buscar localização...") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = {
-                            viewModel.onSearchQueryChanged("")
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Limpar")
+            if (uiState.selectedOrigin == null) {
+                OutlinedTextField(
+                    value = uiState.originQuery,
+                    onValueChange = viewModel::onOriginQueryChanged,
+                    placeholder = { Text("De onde você está saindo? (Origem)") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    },
+                    trailingIcon = {
+                        if (uiState.originQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                viewModel.onOriginQueryChanged("")
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Limpar")
+                            }
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { if (uiState.originQuery.isNotBlank()) viewModel.searchOrigin(uiState.originQuery) }
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    singleLine = true
+                )
+
+                if (uiState.isSearchingOrigin && uiState.originQuery.isNotBlank()) {
+                    Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center).size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+
+                if (uiState.originResults.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 150.dp)
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(uiState.originResults, key = { it.id }) { waypoint ->
+                            SearchResultItemCompact(
+                                waypoint = waypoint,
+                                isSelected = false,
+                                onClick = {
+                                    viewModel.selectOriginResult(waypoint)
+                                    focusManager.clearFocus()
+                                    keyboardController?.hide()
+                                }
+                            )
                         }
                     }
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = { if (uiState.searchQuery.isNotBlank()) viewModel.searchPlaces(uiState.searchQuery) }
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                ),
-                singleLine = true
-            )
+                }
 
-            if (uiState.isSearching && uiState.searchQuery.isNotBlank()) {
-                Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center).size(20.dp),
-                        strokeWidth = 2.dp
+                uiState.selectedOrigin?.let { wp ->
+                    SelectableChip(
+                        label = "De: ${wp.name}",
+                        onClear = viewModel::clearOrigin
                     )
                 }
             }
 
-            if (uiState.searchResults.isNotEmpty()) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 200.dp)
-                        .padding(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    items(uiState.searchResults, key = { it.id }) { waypoint ->
-                        SearchResultItemCompact(
-                            waypoint = waypoint,
-                            isSelected = false,
-                            onClick = {
-                                if (uiState.selectedOrigin == null) {
-                                    viewModel.selectOrigin(waypoint)
-                                } else if (uiState.selectedDestination == null) {
-                                    viewModel.selectDestination(waypoint)
-                                } else {
-                                    viewModel.addIntermediateWaypoint(waypoint)
-                                }
+            if (uiState.selectedDestination == null) {
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = uiState.destinationQuery,
+                    onValueChange = viewModel::onDestinationQueryChanged,
+                    placeholder = { Text("Para onde você vai? (Destino)") },
+                    leadingIcon = {
+                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
+                    },
+                    trailingIcon = {
+                        if (uiState.destinationQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                viewModel.onDestinationQueryChanged("")
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Limpar")
                             }
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { if (uiState.destinationQuery.isNotBlank()) viewModel.searchDestination(uiState.destinationQuery) }
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    singleLine = true
+                )
+
+                if (uiState.isSearchingDestination && uiState.destinationQuery.isNotBlank()) {
+                    Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center).size(20.dp),
+                            strokeWidth = 2.dp
                         )
                     }
                 }
-            }
 
-            uiState.selectedOrigin?.let { wp ->
-                SelectableChip(
-                    label = "De: ${wp.name}",
-                    onClear = viewModel::clearOrigin
-                )
-            }
-            uiState.selectedDestination?.let { wp ->
-                SelectableChip(
-                    label = "Para: ${wp.name}",
-                    onClear = viewModel::clearDestination
-                )
+                if (uiState.destinationResults.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 150.dp)
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(uiState.destinationResults, key = { it.id }) { waypoint ->
+                            SearchResultItemCompact(
+                                waypoint = waypoint,
+                                isSelected = false,
+                                onClick = {
+                                    viewModel.selectDestinationResult(waypoint)
+                                    focusManager.clearFocus()
+                                    keyboardController?.hide()
+                                }
+                            )
+                        }
+                    }
+                }
+
+                uiState.selectedDestination?.let { wp ->
+                    SelectableChip(
+                        label = "Para: ${wp.name}",
+                        onClear = viewModel::clearDestination
+                    )
+                }
             }
 
             uiState.selectedVehicle?.let { vehicle ->
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 VehicleCompactCard(vehicle = vehicle)
             }
 
             uiState.currentRoute?.let { route ->
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 RouteSummaryCompact(
                     route = route,
                     onNavigateToSummary = onNavigateToSummary,
@@ -544,7 +636,7 @@ private fun BottomSheetSearchContent(
             }
 
             if (uiState.selectedOrigin != null && uiState.selectedDestination != null) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 CalculateRouteButton(
                     enabled = true,
                     isCalculating = uiState.isCalculatingRoute,
