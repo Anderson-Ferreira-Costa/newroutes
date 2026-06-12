@@ -162,6 +162,15 @@ app/
   TODO: substituir por Marker nativo do OSMDroid
 - collectAsState() obrigatório para StateFlow em Compose
 
+### Sessão 17 — Moshi UUID adapter (concluída)
+
+- Problema: `Platform class java.util.UUID requires explicit JsonAdapter` ao salvar Route no Room
+- KotlinJsonAdapterFactory não reconhece UUID nativamente em data classes
+- `UuidAdapter` criado em `Converters.kt` com `@ToJson`/`@FromJson` (UUID ↔ String)
+- `.add(UuidAdapter())` registrado ANTES de `.addLast(KotlinJsonAdapterFactory())` no Moshi.Builder
+- Afeta `Waypoint.id`, `TollPlaza.id`, `Vehicle.id` serializados como JSON nos TypeConverters
+- Route salva no banco sem erro; "Ver detalhes" navega para SummaryScreen corretamente
+
 ### Sessão 11 — Correções pós-build
 
 - Moshi deserialização de `List<T>`: `GeocodingModule.kt` e `RoutingModule.kt`

@@ -95,12 +95,3 @@ Thumbs.db
 
 # Debug signing
 debug.keystore
-
-# Generated schemas
-app/schemas/
-
-# Kotlin compiler cache
-.kotlin/
-
-# Gradle wrapper script (binary)
-gradlew.bat

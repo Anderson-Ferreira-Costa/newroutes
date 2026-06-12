@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import com.newroutes.app.ui.map.MapScreen
 import com.newroutes.app.ui.map.SharedRouteConfig
 import com.newroutes.app.ui.route.RouteScreen
+import com.newroutes.app.ui.routes.SavedRoutesScreen
 import com.newroutes.app.ui.summary.SummaryScreen
 import com.newroutes.app.ui.vehicle.VehicleScreen
 
@@ -17,15 +18,15 @@ sealed class Screen(val route: String) {
     object Route : Screen("route")
     object Summary : Screen("summary/{routeId}")
     object Vehicle : Screen("vehicle")
+    object Routes : Screen("routes")
 }
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
+    sharedConfig: SharedRouteConfig,
     modifier: Modifier = Modifier
 ) {
-    val sharedConfig = remember { SharedRouteConfig() }
-
     NavHost(
         navController = navController,
         startDestination = Screen.Map.route,
@@ -39,7 +40,8 @@ fun AppNavigation(
                 onNavigateToVehicle = {
                     navController.navigate(Screen.Vehicle.route)
                 },
-                sharedConfig = sharedConfig
+                sharedConfig = sharedConfig,
+                navController = navController
             )
         }
         composable(Screen.Route.route) {
@@ -67,6 +69,16 @@ fun AppNavigation(
             VehicleScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+        composable(Screen.Routes.route) {
+            SavedRoutesScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onRouteClick = { routeId ->
+                    navController.navigate("summary/$routeId")
                 }
             )
         }
