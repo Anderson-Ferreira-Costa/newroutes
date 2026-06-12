@@ -291,6 +291,22 @@ app/
   NewRoutesApplication.kt com @HiltAndroidApp intacto.
   AndroidManifest.xml com android:name=".NewRoutesApplication" confirmado.
 
+### Sessão 20 — Separar busca de origem e destino (concluída)
+
+- MapUiState: originQuery/originResults e destinationQuery/destinationResults
+  (antes: searchQuery/searchResults compartilhados)
+- MapViewModel: searchOrigin(), searchDestination(), selectOriginResult(),
+  selectDestinationResult(), clearOriginSearchResults(),
+  clearDestinationSearchResults()
+- MapScreen bottom sheet: dois TextFields funcionais distintos
+  - Campo "Origem" com ícone Star (primary) → conectado a originQuery
+  - Campo "Destino" com ícone LocationOn (secondary) → conectado a destinationQuery
+  - Cada campo tem seu próprio LazyColumn de resultados
+  - Bottom sheet colapsado mostra dois campos lado a lado
+  - Bottom sheet expandido mostra campos empilhados com placeholder descritivo
+- Compatibilidade: chips removíveis aparecem quando waypoint já selecionado
+- SearchBar no topo do mapa conectada a originQuery/originResults
+
 ## Fluxo de Trabalho
 
 - Sempre fazer commit após alterações: `git add . && git commit -m "..." && git push origin master`
