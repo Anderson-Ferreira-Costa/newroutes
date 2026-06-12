@@ -37,6 +37,8 @@ import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Motorcycle
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Search
@@ -275,7 +277,7 @@ private fun MapBottomSheet(
                 RouteSummaryCompact(
                     route = uiState.currentRoute,
                     onNavigateToSummary = onNavigateToSummary,
-                    onSaveRoute = viewModel::saveCurrentRoute
+                    isSaved = uiState.isSaved
                 )
             } else {
                 BottomSheetSearchContent(
@@ -515,7 +517,7 @@ private fun DestinationChip(waypoint: Waypoint, onRemove: () -> Unit) {
 private fun RouteSummaryCompact(
     route: Route,
     onNavigateToSummary: (Route) -> Unit,
-    onSaveRoute: () -> Unit
+    isSaved: Boolean
 ) {
     val durationText = formatDuration(route.durationSeconds)
 
@@ -559,7 +561,8 @@ private fun RouteSummaryCompact(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             androidx.compose.material3.Button(
                 onClick = { onNavigateToSummary(route) },
@@ -568,12 +571,38 @@ private fun RouteSummaryCompact(
             ) {
                 Text("Ver detalhes")
             }
-            androidx.compose.material3.Button(
-                onClick = onSaveRoute,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp)
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text("Salvar")
+                if (isSaved) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        "Salva",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Medium
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Error,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        "Não salva",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

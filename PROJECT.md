@@ -326,10 +326,29 @@ Problemas corrigidos:
 5. Mapa limpo: Row apenas com título "Mapa" + IconButton veículos
    (SearchBar + chips + LazyColumn de resultados totalmente removidos)
 6. BottomSheetSearchContent simplificado: estrutura exata de cima para baixo
-   - Campo origem (TextField ou chip)
-   - Campo destino (TextField ou chip)
-   - Veículo compacto
-   - Botão calcular rota
+    - Campo origem (TextField ou chip)
+    - Campo destino (TextField ou chip)
+    - Veículo compacto
+    - Botão calcular rota
+
+### Sessão 22 — Salvamento automático de rotas (concluída)
+
+Problema: "Ver detalhes" falhava com "Rota não encontrada" porque a rota
+só existia em memória. SummaryViewModel busca via GetRoutesUseCase que
+só retorna rotas do banco.
+
+Solução: calculateRoute() salva automaticamente após sucesso do cálculo.
+
+- MapUiState: adicionado campo isSaved: Boolean = false
+- MapViewModel.calculateRoute(): após CalculateRouteUseCase.success,
+  chama saveRouteUseCase(route). Se salvar ok → isSaved = true;
+  se salvar falha → rota ainda exibida, isSaved = false, error msg.
+- MapViewModel.saveCurrentRoute(): removida (salvamento agora automático)
+- MapViewModel.clearRoute(): reseta isSaved = false
+- MapScreen RouteSummaryCompact: botão "Salvar" substituído por indicador
+  visual "Salva" (verde + CheckCircle) / "Não salva" (vermelho + Error)
+  ao lado do botão "Ver detalhes"
+- "Ver detalhes" funciona imediatamente após calcular, sem clique extra
 
 ## Fluxo de Trabalho
 

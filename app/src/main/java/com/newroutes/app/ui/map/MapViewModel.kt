@@ -30,6 +30,7 @@ data class MapUiState(
     val currentRoute: Route? = null,
     val encodedPolyline: String? = null,
     val isCalculatingRoute: Boolean = false,
+    val isSaved: Boolean = false,
     val error: String? = null
 )
 
@@ -194,13 +195,28 @@ class MapViewModel @Inject constructor(
 
             calculateRouteUseCase.invoke(waypoints, state.selectedVehicle)
                 .onSuccess { route ->
-                    _uiState.update {
-                        it.copy(
-                            currentRoute = route,
-                            encodedPolyline = route.encodedPolyline,
-                            isCalculatingRoute = false
-                        )
-                    }
+                    saveRouteUseCase.invoke(route)
+                        .onSuccess {
+                            _uiState.update {
+                                it.copy(
+                                    currentRoute = route,
+                                    encodedPolyline = route.encodedPolyline,
+                                    isCalculatingRoute = false,
+                                    isSaved = true
+                                )
+                            }
+                        }
+                        .onFailure { saveError ->
+                            _uiState.update {
+                                it.copy(
+                                    currentRoute = route,
+                                    encodedPolyline = route.encodedPolyline,
+                                    isCalculatingRoute = false,
+                                    isSaved = false,
+                                    error = "Rota calculada mas não foi possível salvar: ${saveError.message}"
+                                )
+                            }
+                        }
                 }
                 .onFailure { exception ->
                     _uiState.update {
@@ -208,21 +224,6 @@ class MapViewModel @Inject constructor(
                             error = exception.message,
                             isCalculatingRoute = false
                         )
-                    }
-                }
-        }
-    }
-
-    /**
-     * Salva a rota atualmente calculada no estado.
-     */
-    fun saveCurrentRoute() {
-        val route = _uiState.value.currentRoute ?: return
-        viewModelScope.launch {
-            saveRouteUseCase.invoke(route)
-                .onFailure { exception ->
-                    _uiState.update {
-                        it.copy(error = exception.message)
                     }
                 }
         }
@@ -241,7 +242,14 @@ class MapViewModel @Inject constructor(
      */
     fun clearRoute() {
         _uiState.update {
-            MapUiState()
+            it.copy(
+                selectedOrigin = null,
+                selectedDestination = null,
+                intermediateWaypoints = emptyList(),
+                currentRoute = null,
+                encodedPolyline = null,
+                isSaved = false
+            )
         }
     }
 
