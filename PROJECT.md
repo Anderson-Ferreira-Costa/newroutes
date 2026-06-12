@@ -258,3 +258,40 @@ app/
   ordem User-Agent → logging
 - GeocodingModule: Nominatim bloqueia autocomplete/search client-side (política de uso)
   Correção: migração completa para Photon API (`photon.komoot.io`)
+
+### Sessão 18 — Redesign: Bottom Sheet + Bottom Navigation + Tela de Rotas
+
+- MapScreen.kt: redesign completo com Bottom Sheet (Surface + animateContentSize)
+  no fundo do mapa. Estado colapsado mostra busca compacta + chips de seleção.
+  Estado expandido mostra resultados de busca em LazyColumn.
+  FAB de "Calcular Rota" mantido (não conflita com o sheet).
+  Botão de cálculo no sheet quando ambos os pontos estão selecionados.
+  VehicleCompactCard com ícone, nome, consumo e preço do combustível.
+  RouteSummaryCompact com 3 métricas (distância, tempo, custo) + botões
+  "Ver detalhes" e "Salvar".
+- AppBottomNavigation.kt (novo): BottomAppBar com 3 itens (Mapa, Veículos, Rotas)
+  usando NavigationBarItem. Item selecionado destacado via currentBackStackEntry.
+  Mapa selecionado quando em rota "map", "route" ou "summary/*".
+- SavedRoutesScreen.kt (novo): Scaffold com TopAppBar "Rotas Salvas".
+  LazyColumn com cards de rota mostrando distância e custo total.
+  Origem → destino como subtítulo (primeiro e último waypoint).
+  onClick → navega para "summary/{routeId}".
+- SavedRoutesViewModel.kt (novo): @HiltViewModel com GetRoutesUseCase,
+  routes como StateFlow<List<Route>> ordenado por ID.
+- AppNavigation.kt: novo destino Routes ("routes") + SharedRouteConfig
+  passado como parâmetro na função AppNavigation.
+- MainActivity.kt: Scaffold unificado com bottomBar = AppBottomNavigation(navController).
+  MainContent() como @Composable separado.
+
+### Sessão 19 — Correção @AndroidEntryPoint (concluída)
+
+- MainActivity.kt perdeu @AndroidEntryPoint durante o redesign da sessão 18.
+  Adicionado @AndroidEntryPoint antes de class MainActivity.
+  Import: dagger.hilt.android.AndroidEntryPoint.
+  NewRoutesApplication.kt com @HiltAndroidApp intacto.
+  AndroidManifest.xml com android:name=".NewRoutesApplication" confirmado.
+
+## Fluxo de Trabalho
+
+- Sempre fazer commit após alterações: `git add . && git commit -m "..." && git push origin master`
+- Sempre atualizar PROJECT.md com o que foi feito em cada sessão
