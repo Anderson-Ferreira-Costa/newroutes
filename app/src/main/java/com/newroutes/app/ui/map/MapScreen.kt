@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -30,12 +31,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Motorcycle
+import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TwoWheeler
@@ -45,8 +48,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -72,6 +77,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -103,8 +109,6 @@ fun MapScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    var sheetExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(sharedConfig) {
         sharedConfig.waypoints.forEach { waypoint ->
@@ -184,82 +188,31 @@ fun MapScreen(
             }
         )
 
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
                 .padding(bottom = 80.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Mapa",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+            Text(
+                text = "Mapa",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onNavigateToVehicle) {
+                Icon(
+                    Icons.Default.DirectionsCar,
+                    contentDescription = "Veículos",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(4.dp)
                 )
-                IconButton(onClick = onNavigateToVehicle) {
-                    Icon(
-                        Icons.Default.DirectionsCar,
-                        contentDescription = "Veículos",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                RoundedCornerShape(12.dp)
-                            )
-                            .padding(4.dp)
-                    )
-                }
-            }
-
-            if (uiState.selectedOrigin == null || uiState.selectedDestination == null) {
-                SearchBar(
-                    query = uiState.originQuery,
-                    onQueryChanged = viewModel::onOriginQueryChanged,
-                    onSearch = viewModel::searchOrigin,
-                    onClear = { viewModel.onOriginQueryChanged("") }
-                )
-
-                SelectionChips(
-                    selectedOrigin = uiState.selectedOrigin,
-                    selectedDestination = uiState.selectedDestination,
-                    onClearOrigin = viewModel::clearOrigin,
-                    onClearDestination = viewModel::clearDestination
-                )
-
-                if (uiState.originResults.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        items(uiState.originResults, key = { it.id }) { waypoint ->
-                            SearchResultItem(
-                                waypoint = waypoint,
-                                isOrigin = uiState.selectedOrigin?.id == waypoint.id,
-                                isDestination = uiState.selectedDestination?.id == waypoint.id,
-                                onClick = {
-                                    if (uiState.selectedOrigin == null) {
-                                        viewModel.selectOriginResult(waypoint)
-                                    } else if (uiState.selectedDestination == null) {
-                                        viewModel.selectDestinationResult(waypoint)
-                                    } else {
-                                        viewModel.addIntermediateWaypoint(waypoint)
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
             }
         }
 
@@ -290,8 +243,6 @@ fun MapScreen(
 
         MapBottomSheet(
             uiState = uiState,
-            sheetExpanded = sheetExpanded,
-            onSheetExpandedChanged = { sheetExpanded = it },
             viewModel = viewModel,
             onNavigateToSummary = onNavigateToSummary,
             onNavigateToVehicle = onNavigateToVehicle,
@@ -303,8 +254,6 @@ fun MapScreen(
 @Composable
 private fun MapBottomSheet(
     uiState: MapUiState,
-    sheetExpanded: Boolean,
-    onSheetExpandedChanged: (Boolean) -> Unit,
     viewModel: MapViewModel,
     onNavigateToSummary: (Route) -> Unit,
     onNavigateToVehicle: () -> Unit,
@@ -326,19 +275,13 @@ private fun MapBottomSheet(
                 RouteSummaryCompact(
                     route = uiState.currentRoute,
                     onNavigateToSummary = onNavigateToSummary,
-                    onSaveRoute = viewModel::saveCurrentRoute,
-                    onExpandChanged = onSheetExpandedChanged
+                    onSaveRoute = viewModel::saveCurrentRoute
                 )
             } else {
-           BottomSheetSearchContent(
-                uiState = uiState,
-                sheetExpanded = sheetExpanded,
-                onSheetExpandedChanged = onSheetExpandedChanged,
-                viewModel = viewModel,
-                onNavigateToSummary = onNavigateToSummary,
-                onNavigateToVehicle = onNavigateToVehicle,
-                onNavigateToRoutes = onNavigateToRoutes
-            )
+                BottomSheetSearchContent(
+                    uiState = uiState,
+                    viewModel = viewModel
+                )
             }
         }
     }
@@ -347,302 +290,222 @@ private fun MapBottomSheet(
 @Composable
 private fun BottomSheetSearchContent(
     uiState: MapUiState,
-    sheetExpanded: Boolean,
-    onSheetExpandedChanged: (Boolean) -> Unit,
-    viewModel: MapViewModel,
-    onNavigateToSummary: (Route) -> Unit,
-    onNavigateToVehicle: () -> Unit,
-    onNavigateToRoutes: () -> Unit
+    viewModel: MapViewModel
 ) {
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(16.dp)
     ) {
-        if (!sheetExpanded) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = uiState.originQuery,
-                    onValueChange = viewModel::onOriginQueryChanged,
-                    placeholder = { Text("Origem") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { if (uiState.originQuery.isNotBlank()) viewModel.searchOrigin(uiState.originQuery) }
-                    ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            if (uiState.selectedOrigin != null) {
-                                viewModel.clearOrigin()
-                            } else {
-                                onSheetExpandedChanged(true)
-                            }
-                        },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    ),
-                    singleLine = true,
-                    readOnly = uiState.selectedOrigin != null
-                )
-
-                OutlinedTextField(
-                    value = uiState.destinationQuery,
-                    onValueChange = viewModel::onDestinationQueryChanged,
-                    placeholder = { Text("Destino") },
-                    leadingIcon = {
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { if (uiState.destinationQuery.isNotBlank()) viewModel.searchDestination(uiState.destinationQuery) }
-                    ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            if (uiState.selectedDestination != null) {
-                                viewModel.clearDestination()
-                            } else {
-                                onSheetExpandedChanged(true)
-                            }
-                        },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    ),
-                    singleLine = true,
-                    readOnly = uiState.selectedDestination != null
-                )
-            }
-
-            SelectionChipsCompact(
-                selectedOrigin = uiState.selectedOrigin,
-                selectedDestination = uiState.selectedDestination,
-                onClearOrigin = viewModel::clearOrigin,
-                onClearDestination = viewModel::clearDestination
+        // === CAMPO ORIGEM ===
+        if (uiState.selectedOrigin != null) {
+            OriginChip(
+                waypoint = uiState.selectedOrigin,
+                onRemove = viewModel::clearOrigin
+            )
+        } else {
+            OutlinedTextField(
+                value = uiState.originQuery,
+                onValueChange = viewModel::onOriginQueryChanged,
+                label = { Text("Origem") },
+                placeholder = { Text("De onde você está saindo?") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.RadioButtonChecked,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50)
+                    )
+                },
+                trailingIcon = {
+                    if (uiState.originQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onOriginQueryChanged("") }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpar")
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = { viewModel.searchOrigin(uiState.originQuery) }
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
-            uiState.currentRoute?.let { route ->
-                Spacer(Modifier.height(8.dp))
-                RouteSummaryCompact(
-                    route = route,
-                    onNavigateToSummary = onNavigateToSummary,
-                    onSaveRoute = viewModel::saveCurrentRoute,
-                    onExpandChanged = null
-                )
-            }
-
-            uiState.selectedVehicle?.let { vehicle ->
-                Spacer(Modifier.height(8.dp))
-                VehicleCompactCard(vehicle = vehicle)
-            }
-
-            if (uiState.selectedOrigin != null && uiState.selectedDestination != null) {
-                Spacer(Modifier.height(8.dp))
-                CalculateRouteButton(
-                    enabled = true,
-                    isCalculating = uiState.isCalculatingRoute,
-                    onClick = { viewModel.calculateRoute() }
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Selecionar Local",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                IconButton(onClick = {
-                    onSheetExpandedChanged(false)
-                    focusManager.clearFocus()
-                    keyboardController?.hide()
-                }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Recolher")
-                }
-            }
-
-            if (uiState.selectedOrigin == null) {
-                OutlinedTextField(
-                    value = uiState.originQuery,
-                    onValueChange = viewModel::onOriginQueryChanged,
-                    placeholder = { Text("De onde você está saindo? (Origem)") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                    },
-                    trailingIcon = {
-                        if (uiState.originQuery.isNotEmpty()) {
-                            IconButton(onClick = {
-                                viewModel.onOriginQueryChanged("")
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Limpar")
-                            }
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { if (uiState.originQuery.isNotBlank()) viewModel.searchOrigin(uiState.originQuery) }
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    ),
-                    singleLine = true
-                )
-
-                if (uiState.isSearchingOrigin && uiState.originQuery.isNotBlank()) {
-                    Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center).size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                }
-
-                if (uiState.originResults.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 150.dp)
-                            .padding(vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        items(uiState.originResults, key = { it.id }) { waypoint ->
-                            SearchResultItemCompact(
-                                waypoint = waypoint,
-                                isSelected = false,
-                                onClick = {
+            if (uiState.originResults.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                ) {
+                    items(uiState.originResults, key = { it.id }) { waypoint ->
+                        ListItem(
+                            headlineContent = { Text(waypoint.name) },
+                            supportingContent = { Text(waypoint.address) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
                                     viewModel.selectOriginResult(waypoint)
-                                    focusManager.clearFocus()
-                                    keyboardController?.hide()
                                 }
-                            )
-                        }
-                    }
-                }
-
-                uiState.selectedOrigin?.let { wp ->
-                    SelectableChip(
-                        label = "De: ${wp.name}",
-                        onClear = viewModel::clearOrigin
-                    )
-                }
-            }
-
-            if (uiState.selectedDestination == null) {
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = uiState.destinationQuery,
-                    onValueChange = viewModel::onDestinationQueryChanged,
-                    placeholder = { Text("Para onde você vai? (Destino)") },
-                    leadingIcon = {
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
-                    },
-                    trailingIcon = {
-                        if (uiState.destinationQuery.isNotEmpty()) {
-                            IconButton(onClick = {
-                                viewModel.onDestinationQueryChanged("")
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Limpar")
-                            }
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { if (uiState.destinationQuery.isNotBlank()) viewModel.searchDestination(uiState.destinationQuery) }
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    ),
-                    singleLine = true
-                )
-
-                if (uiState.isSearchingDestination && uiState.destinationQuery.isNotBlank()) {
-                    Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center).size(20.dp),
-                            strokeWidth = 2.dp
                         )
+                        HorizontalDivider()
                     }
                 }
+            }
+        }
 
-                if (uiState.destinationResults.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 150.dp)
-                            .padding(vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        items(uiState.destinationResults, key = { it.id }) { waypoint ->
-                            SearchResultItemCompact(
-                                waypoint = waypoint,
-                                isSelected = false,
-                                onClick = {
-                                    viewModel.selectDestinationResult(waypoint)
-                                    focusManager.clearFocus()
-                                    keyboardController?.hide()
-                                }
-                            )
+        Spacer(Modifier.height(8.dp))
+
+        // === CAMPO DESTINO ===
+        if (uiState.selectedDestination != null) {
+            DestinationChip(
+                waypoint = uiState.selectedDestination,
+                onRemove = viewModel::clearDestination
+            )
+        } else {
+            OutlinedTextField(
+                value = uiState.destinationQuery,
+                onValueChange = viewModel::onDestinationQueryChanged,
+                label = { Text("Destino") },
+                placeholder = { Text("Para onde você vai?") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color(0xFFE53935)
+                    )
+                },
+                trailingIcon = {
+                    if (uiState.destinationQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onDestinationQueryChanged("") }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpar")
                         }
                     }
-                }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = { viewModel.searchDestination(uiState.destinationQuery) }
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
 
-                uiState.selectedDestination?.let { wp ->
-                    SelectableChip(
-                        label = "Para: ${wp.name}",
-                        onClear = viewModel::clearDestination
-                    )
+            if (uiState.destinationResults.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                ) {
+                    items(uiState.destinationResults, key = { it.id }) { waypoint ->
+                        ListItem(
+                            headlineContent = { Text(waypoint.name) },
+                            supportingContent = { Text(waypoint.address) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.selectDestinationResult(waypoint)
+                                }
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
+        }
 
-            uiState.selectedVehicle?.let { vehicle ->
-                Spacer(Modifier.height(12.dp))
-                VehicleCompactCard(vehicle = vehicle)
-            }
+        // === VEÍCULO SELECIONADO ===
+        uiState.selectedVehicle?.let { vehicle ->
+            Spacer(Modifier.height(16.dp))
+            VehicleCompactCard(vehicle = vehicle)
+        }
 
-            uiState.currentRoute?.let { route ->
-                Spacer(Modifier.height(12.dp))
-                RouteSummaryCompact(
-                    route = route,
-                    onNavigateToSummary = onNavigateToSummary,
-                    onSaveRoute = viewModel::saveCurrentRoute,
-                    onExpandChanged = null
+        // === BOTÃO CALCULAR ===
+        if (uiState.selectedOrigin != null && uiState.selectedDestination != null) {
+            Spacer(Modifier.height(16.dp))
+            CalculateRouteButton(
+                enabled = true,
+                isCalculating = uiState.isCalculatingRoute,
+                onClick = { viewModel.calculateRoute() }
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun OriginChip(waypoint: Waypoint, onRemove: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.RadioButtonChecked,
+                    contentDescription = null,
+                    tint = Color(0xFF4CAF50)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "De: ${waypoint.name}",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
             }
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Default.Close, contentDescription = "Remover origem")
+            }
+        }
+    }
+}
 
-            if (uiState.selectedOrigin != null && uiState.selectedDestination != null) {
-                Spacer(Modifier.height(12.dp))
-                CalculateRouteButton(
-                    enabled = true,
-                    isCalculating = uiState.isCalculatingRoute,
-                    onClick = { viewModel.calculateRoute() }
+@Composable
+private fun DestinationChip(waypoint: Waypoint, onRemove: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = Color(0xFFE53935)
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Para: ${waypoint.name}",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Default.Close, contentDescription = "Remover destino")
             }
         }
     }
@@ -652,8 +515,7 @@ private fun BottomSheetSearchContent(
 private fun RouteSummaryCompact(
     route: Route,
     onNavigateToSummary: (Route) -> Unit,
-    onSaveRoute: () -> Unit,
-    onExpandChanged: ((Boolean) -> Unit)? = null
+    onSaveRoute: () -> Unit
 ) {
     val durationText = formatDuration(route.durationSeconds)
 
@@ -715,24 +577,6 @@ private fun RouteSummaryCompact(
             }
         }
     }
-}
-
-@Composable
-private fun SelectableChip(
-    label: String,
-    onClear: () -> Unit
-) {
-    FilterChip(
-        selected = true,
-        onClick = onClear,
-        label = { Text(label, maxLines = 1) },
-        leadingIcon = {
-            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(14.dp))
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp)
-    )
 }
 
 @Composable
@@ -811,253 +655,6 @@ private fun CalculateRouteButton(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-        }
-    }
-}
-
-@Composable
-private fun SelectionChipsCompact(
-    selectedOrigin: Waypoint?,
-    selectedDestination: Waypoint?,
-    onClearOrigin: () -> Unit,
-    onClearDestination: () -> Unit
-) {
-    if (selectedOrigin == null && selectedDestination == null) return
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        selectedOrigin?.let { wp ->
-            FilterChip(
-                selected = true,
-                onClick = onClearOrigin,
-                label = {
-                    Text("De: ${wp.name.take(25)}", maxLines = 1, style = MaterialTheme.typography.labelSmall)
-                },
-                leadingIcon = {
-                    Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp))
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        selectedDestination?.let { wp ->
-            FilterChip(
-                selected = true,
-                onClick = onClearDestination,
-                label = {
-                    Text("Para: ${wp.name.take(25)}", maxLines = 1, style = MaterialTheme.typography.labelSmall)
-                },
-                leadingIcon = {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(14.dp))
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChanged: (String) -> Unit,
-    onSearch: (String) -> Unit,
-    onClear: () -> Unit
-) {
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    androidx.compose.material3.Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        androidx.compose.material3.TextField(
-            value = query,
-            onValueChange = onQueryChanged,
-            placeholder = {
-                Text("Buscar localização...")
-            },
-            leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp))
-            },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = {
-                        onClear()
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Limpar busca")
-                    }
-                }
-            },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    if (query.isNotBlank()) {
-                        onSearch(query)
-                    }
-                }
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            )
-        )
-    }
-}
-
-@Composable
-private fun SelectionChips(
-    selectedOrigin: Waypoint?,
-    selectedDestination: Waypoint?,
-    onClearOrigin: () -> Unit,
-    onClearDestination: () -> Unit
-) {
-    if (selectedOrigin == null && selectedDestination == null) return
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        selectedOrigin?.let { wp ->
-            FilterChip(
-                selected = true,
-                onClick = onClearOrigin,
-                label = {
-                    Text("De: ${wp.name.take(30)}", maxLines = 1)
-                },
-                leadingIcon = {
-                    Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(16.dp))
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        selectedDestination?.let { wp ->
-            FilterChip(
-                selected = true,
-                onClick = onClearDestination,
-                label = {
-                    Text("Para: ${wp.name.take(30)}", maxLines = 1)
-                },
-                leadingIcon = {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun SearchResultItem(
-    waypoint: Waypoint,
-    isOrigin: Boolean,
-    isDestination: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .then(
-                if (isOrigin) {
-                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                } else if (isDestination) {
-                    Modifier.background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
-                } else {
-                    Modifier
-                }
-            )
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.LocationOn,
-            contentDescription = null,
-            tint = when {
-                isOrigin -> MaterialTheme.colorScheme.primary
-                isDestination -> MaterialTheme.colorScheme.secondary
-                else -> MaterialTheme.colorScheme.primary
-            },
-            modifier = Modifier.size(20.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = waypoint.name,
-                style = MaterialTheme.typography.bodyMedium,
-                color = when {
-                    isOrigin -> MaterialTheme.colorScheme.onPrimaryContainer
-                    isDestination -> MaterialTheme.colorScheme.onSecondaryContainer
-                    else -> Color.Black
-                }
-            )
-            if (waypoint.address.isNotBlank()) {
-                Text(
-                    text = waypoint.address,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-        }
-        when {
-            isOrigin -> Icon(Icons.Default.Star, contentDescription = "Origem", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-            isDestination -> Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Destino", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
-        }
-    }
-}
-
-@Composable
-private fun SearchResultItemCompact(
-    waypoint: Waypoint,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .then(
-                if (isSelected) {
-                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                } else {
-                    Modifier
-                }
-            )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.LocationOn,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(16.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = waypoint.name,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-            )
-            if (waypoint.address.isNotBlank()) {
-                Text(
-                    text = waypoint.address,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }

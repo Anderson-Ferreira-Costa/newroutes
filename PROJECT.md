@@ -307,6 +307,30 @@ app/
 - Compatibilidade: chips removíveis aparecem quando waypoint já selecionado
 - SearchBar no topo do mapa conectada a originQuery/originResults
 
+### Sessão 21 — Reescrita completa do bottom sheet de busca (concluída)
+
+Problemas corrigidos:
+1. Search bar "Buscar localização..." órfã removida do topo do mapa
+   (Coluna com SearchBar + SelectionChips + LazyColumn acima do sheet)
+2. Origem e Destino agora empilhados verticalmente (Column, nunca Row)
+   - Origem SEMPRE em cima, Destino SEMPRE embaixo
+   - Cada campo com OutlinedTextField full-width
+3. Destino agora abre dropdown de resultados corretamente
+   - destinationResults tem LazyColumn independente com ListItem
+   - selectDestinationResult() limpa query e results
+4. Chips não duplicam — OriginChip e DestinationChip substituem
+   SelectionChips/SelectableChip (que causavam chips "De: ... duplicados")
+   - OriginChip: Surface com primaryContainer, ícone RadioButtonChecked verde
+   - DestinationChip: Surface com secondaryContainer, ícone LocationOn vermelho
+   - Cada chip tem botão Close para remover waypoint
+5. Mapa limpo: Row apenas com título "Mapa" + IconButton veículos
+   (SearchBar + chips + LazyColumn de resultados totalmente removidos)
+6. BottomSheetSearchContent simplificado: estrutura exata de cima para baixo
+   - Campo origem (TextField ou chip)
+   - Campo destino (TextField ou chip)
+   - Veículo compacto
+   - Botão calcular rota
+
 ## Fluxo de Trabalho
 
 - Sempre fazer commit após alterações: `git add . && git commit -m "..." && git push origin master`
