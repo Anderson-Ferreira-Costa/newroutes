@@ -5,11 +5,25 @@ import com.newroutes.app.domain.model.TollCategory
 import com.newroutes.app.domain.model.TollPlaza
 import com.newroutes.app.domain.model.Vehicle
 import com.newroutes.app.domain.model.Waypoint
+import com.squareup.moshi.FromJson
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.util.UUID
+
+/**
+ * Adaptador Moshi para serialização/desserialização de UUID.
+ * Necessário pois o KotlinJsonAdapterFactory não reconhece UUID nativamente.
+ */
+class UuidAdapter {
+    @ToJson
+    fun toJson(uuid: UUID): String = uuid.toString()
+
+    @FromJson
+    fun fromJson(value: String): UUID = UUID.fromString(value)
+}
 
 /**
  * Conversores de tipo para o Room, permitindo armazenar no banco dados
@@ -19,6 +33,7 @@ import java.util.UUID
 class Converters {
 
     private val moshi: Moshi = Moshi.Builder()
+        .add(UuidAdapter())
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
