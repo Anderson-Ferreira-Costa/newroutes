@@ -25,19 +25,25 @@ class TollPlazaSeeder @Inject constructor(
     }
 
     suspend fun seedIfNeeded() {
+        Log.d("TollPlazaSeeder", "seedIfNeeded() chamado")
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_SEEDED, false)) return
+        val jaSeeded = prefs.getBoolean(KEY_SEEDED, false)
+        Log.d("TollPlazaSeeder", "Já foi feito seed: $jaSeeded")
+        if (jaSeeded) return
 
+        Log.d("TollPlazaSeeder", "Iniciando parse do CSV...")
         try {
             val entities = parseCsv()
+            Log.d("TollPlazaSeeder", "Praças parseadas: ${entities.size}")
             if (entities.isNotEmpty()) {
                 tollPlazaDao.upsertAll(entities)
                 prefs.edit().putBoolean(KEY_SEEDED, true).apply()
                 Log.i("TollPlazaSeeder", "Seed concluído: ${entities.size} praças inseridas")
+            } else {
+                Log.w("TollPlazaSeeder", "Nenhuma praça parseada — CSV vazio ou erro de leitura")
             }
         } catch (e: Exception) {
-            Log.e("TollPlazaSeeder", "Erro no seed de pedágios: ${e.message}", e)
-            // Não marcar como seeded — tentar novamente no próximo launch
+            Log.e("TollPlazaSeeder", "Erro no seed: ${e.message}", e)
         }
     }
 
