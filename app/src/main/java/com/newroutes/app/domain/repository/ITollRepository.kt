@@ -8,7 +8,10 @@ import java.util.UUID
 /**
  * Contrato para acesso à base de praças de pedágio.
  * Implementações concretas vivem em data/tolls/.
+ *
+ * Reservado para implementação futura de pedágios.
  */
+@Deprecated("Reservado para implementação futura de pedágios")
 interface ITollRepository {
 
     /** Retorna uma Flow emitindo todas as praças de pedágio cadastradas. */

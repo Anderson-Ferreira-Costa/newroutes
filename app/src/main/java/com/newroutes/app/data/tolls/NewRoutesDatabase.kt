@@ -16,7 +16,7 @@ import androidx.room.TypeConverters
         VehicleEntity::class,
         RouteEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

@@ -1,18 +1,15 @@
 package com.newroutes.app.domain.usecase
 
 import com.newroutes.app.domain.model.Route
-import com.newroutes.app.domain.repository.ITollRepository
 
 /**
  * Recalcula os custos de uma rota já existente com um veículo diferente.
- *
+ * 
  * Útil quando o usuário altera o veículo selecionado e precisa
- * reavaliar imediatamente os custos (pedágio + combustível) sem
- * recalculadar a rota completa.
+ * reavaliar imediatamente os custos de combustível sem
+ * recalcular a rota completa.
  */
-class EstimateCostUseCase(
-    private val tollRepository: ITollRepository
-) {
+class EstimateCostUseCase {
 
     /**
      * Recalcula os custos de uma rota com base em um novo veículo.
@@ -23,15 +20,7 @@ class EstimateCostUseCase(
      */
     suspend fun invoke(route: Route, vehicle: com.newroutes.app.domain.model.Vehicle): Result<Route> {
         return try {
-            val tollPlazas = tollRepository
-                .getTollPlazasNearRoute(route.waypoints, radiusMeters = 500.0)
-                .filter { it.category == vehicle.category }
-
-            val totalTollCost = tollPlazas.sumOf { it.cost }
-
-            // TODO: distanceMeters e durationSeconds são placeholders (0L).
-            // Valores reais virão do OsrmClient (camada data/) em sessão futura.
-            val distanceMeters: Long = 0L
+            val distanceMeters = route.distanceMeters
 
             val totalFuelCost = calculateFuelCost(
                 distanceMeters = distanceMeters,
@@ -42,10 +31,8 @@ class EstimateCostUseCase(
             Result.success(
                 route.copy(
                     vehicle = vehicle,
-                    tollPlazas = tollPlazas,
-                    totalTollCost = totalTollCost,
                     totalFuelCost = totalFuelCost,
-                    totalCost = totalTollCost + totalFuelCost
+                    totalCost = totalFuelCost
                 )
             )
         } catch (e: Exception) {

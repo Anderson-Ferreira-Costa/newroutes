@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalShipping
@@ -43,7 +42,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -51,7 +49,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,8 +60,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.model.TollCategory
-import com.newroutes.app.domain.model.TollPlaza
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,20 +173,6 @@ private fun SummaryContent(
 
         item {
             VehicleCard(route = route)
-        }
-
-        if (route.tollPlazas.isNotEmpty()) {
-            item {
-                Text(
-                    text = "Pedágios na rota (${route.tollPlazas.size})",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-            items(route.tollPlazas, key = { it.id.toString() }) { tollPlaza ->
-                TollPlazaCard(tollPlaza = tollPlaza)
-            }
         }
 
         item {
@@ -310,15 +291,6 @@ private fun CostBreakdown(route: Route) {
             Spacer(Modifier.height(8.dp))
 
             ListItem(
-                headlineContent = { Text("Pedágios") },
-                supportingContent = { Text("R$ %.2f".format(route.totalTollCost)) },
-                colors = ListItemDefaults.colors(
-                    containerColor = Color.Transparent
-                )
-            )
-            Divider()
-
-            ListItem(
                 headlineContent = { Text("Combustível") },
                 supportingContent = { Text("R$ %.2f".format(route.totalFuelCost)) },
                 colors = ListItemDefaults.colors(
@@ -395,40 +367,6 @@ private fun getVehicleIcon(category: TollCategory): ImageVector {
         TollCategory.TRUCK_5_AXLES,
         TollCategory.TRUCK_6_AXLES -> Icons.Default.LocalShipping
         TollCategory.BUS -> Icons.Default.DirectionsBus
-    }
-}
-
-@Composable
-private fun TollPlazaCard(tollPlaza: TollPlaza) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = tollPlaza.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = tollPlaza.highway,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = "R$ %.2f".format(tollPlaza.cost),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
     }
 }
 

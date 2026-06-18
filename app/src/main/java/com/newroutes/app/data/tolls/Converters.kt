@@ -2,7 +2,6 @@ package com.newroutes.app.data.tolls
 
 import androidx.room.TypeConverter
 import com.newroutes.app.domain.model.TollCategory
-import com.newroutes.app.domain.model.TollPlaza
 import com.newroutes.app.domain.model.Vehicle
 import com.newroutes.app.domain.model.Waypoint
 import com.squareup.moshi.FromJson
@@ -64,28 +63,6 @@ class Converters {
      */
     @TypeConverter
     fun toTollCategory(value: String): TollCategory = TollCategory.valueOf(value)
-
-    // ── List<TollPlaza> ───────────────────────────────────────────────
-
-    /**
-     * Serializa uma lista de TollPlaza em JSON String via Moshi.
-     */
-    @TypeConverter
-    fun fromTollPlazaList(list: List<TollPlaza>): String {
-        val type = Types.newParameterizedType(List::class.java, TollPlaza::class.java)
-        val adapter: JsonAdapter<List<TollPlaza>> = moshi.adapter(type)
-        return adapter.toJson(list)
-    }
-
-    /**
-     * Desserializa uma String JSON de volta para List<TollPlaza>.
-     */
-    @TypeConverter
-    fun toTollPlazaList(value: String): List<TollPlaza> {
-        val type = Types.newParameterizedType(List::class.java, TollPlaza::class.java)
-        val adapter: JsonAdapter<List<TollPlaza>> = moshi.adapter(type)
-        return adapter.fromJson(value) ?: emptyList()
-    }
 
     // ── List<Waypoint> ────────────────────────────────────────────────
 

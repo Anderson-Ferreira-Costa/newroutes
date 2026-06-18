@@ -1,10 +1,8 @@
 package com.newroutes.app.domain.usecase
 
 import com.newroutes.app.domain.model.Route
-import com.newroutes.app.domain.model.TollPlaza
 import com.newroutes.app.domain.model.Vehicle
 import com.newroutes.app.domain.model.Waypoint
-import com.newroutes.app.domain.repository.ITollRepository
 import com.newroutes.app.domain.repository.IVehicleRepository
 import com.newroutes.app.data.routing.OsrmRepository
 import kotlinx.coroutines.flow.first
@@ -15,18 +13,16 @@ import kotlinx.coroutines.flow.first
  * Responsabilidades:
  * - Validar número mínimo de waypoints
  * - Resolver o veículo a ser usado (argumento ou padrão)
- * - Buscar e filtrar praças de pedágio compatíveis com a categoria do veículo
  * - Obter distância e duração reais via OSRM
- * - Calcular custos de pedágio e combustível
+ * - Calcular custo de combustível
  */
 class CalculateRouteUseCase(
-    private val tollRepository: ITollRepository,
     private val vehicleRepository: IVehicleRepository,
     private val osrmRepository: OsrmRepository
 ) {
 
     /**
-     * Calcula uma rota completa com custos de pedágio e combustível.
+     * Calcula uma rota completa com custo de combustível.
      *
      * @param waypoints lista de pontos da rota (mínimo 2)
      * @param vehicle veículo usado no cálculo; se null, usa o veículo padrão
@@ -46,9 +42,6 @@ class CalculateRouteUseCase(
             }
 
         return resolvedVehicle.mapCatching { v ->
-            val tollPlazas = fetchAndFilterTollPlazas(waypoints, v.category)
-            val totalTollCost = tollPlazas.sumOf { it.cost }
-
             val osrmResult = osrmRepository.getRoute(waypoints)
                 .getOrElse {
                     throw IllegalStateException("Falha ao calcular rota com OSRM: ${it.message}")
@@ -68,11 +61,9 @@ class CalculateRouteUseCase(
                 waypoints = waypoints,
                 distanceMeters = distanceMeters,
                 durationSeconds = durationSeconds,
-                tollPlazas = tollPlazas,
                 vehicle = v,
-                totalTollCost = totalTollCost,
                 totalFuelCost = totalFuelCost,
-                totalCost = totalTollCost + totalFuelCost,
+                totalCost = totalFuelCost,
                 encodedPolyline = polyline
             )
         }
@@ -91,22 +82,6 @@ class CalculateRouteUseCase(
             } catch (e: Exception) {
                 Result.failure(e)
             }
-        }
-    }
-
-    /**
-     * Busca praças de pedágio próximas à rota e filtra pela categoria do veículo.
-     * Raio de busca: 500 metros.
-     */
-    private suspend fun fetchAndFilterTollPlazas(
-        waypoints: List<Waypoint>,
-        category: com.newroutes.app.domain.model.TollCategory
-    ): List<TollPlaza> {
-        return try {
-            tollRepository.getTollPlazasNearRoute(waypoints, radiusMeters = 500.0)
-                .filter { it.category == category }
-        } catch (e: Exception) {
-            emptyList()
         }
     }
 

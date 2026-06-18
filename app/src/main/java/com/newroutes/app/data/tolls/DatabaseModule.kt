@@ -3,7 +3,6 @@ package com.newroutes.app.data.tolls
 import android.content.Context
 import androidx.room.Room
 import com.newroutes.app.domain.repository.IRouteRepository
-import com.newroutes.app.domain.repository.ITollRepository
 import com.newroutes.app.domain.repository.IVehicleRepository
 import dagger.Module
 import dagger.Provides
@@ -68,6 +67,7 @@ object DatabaseModule {
 
     /**
      * Provê o repositório de praças de pedágio com o DAO injetado.
+     * Preservado para uso futuro quando a feature de pedágios for reintegrada.
      */
     @Provides
     @Singleton
@@ -94,19 +94,12 @@ object DatabaseModule {
 /**
  * Liga as interfaces de domínio às implementações concretas via @Binds.
  *
- * Permite injetar ITollRepository, IVehicleRepository ou IRouteRepository
+ * Permite injetar IVehicleRepository ou IRouteRepository
  * em qualquer classe e receber automaticamente a implementação Room.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryBindings {
-
-    /**
-     * Liga ITollRepository à implementação TollRepository.
-     */
-    @dagger.Binds
-    @Singleton
-    abstract fun bindTollRepository(repository: TollRepository): ITollRepository
 
     /**
      * Liga IVehicleRepository à implementação VehicleRepository.

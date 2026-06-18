@@ -2,7 +2,6 @@ package com.newroutes.app.domain.usecase
 
 import com.newroutes.app.data.routing.OsrmRepository
 import com.newroutes.app.domain.repository.IRouteRepository
-import com.newroutes.app.domain.repository.ITollRepository
 import com.newroutes.app.domain.repository.IVehicleRepository
 import dagger.Module
 import dagger.Provides
@@ -35,11 +34,16 @@ object DomainModule {
     @Provides
     @Singleton
     fun provideCalculateRouteUseCase(
-        tollRepository: ITollRepository,
         vehicleRepository: IVehicleRepository,
         osrmRepository: OsrmRepository
     ): CalculateRouteUseCase {
-        return CalculateRouteUseCase(tollRepository, vehicleRepository, osrmRepository)
+        return CalculateRouteUseCase(vehicleRepository, osrmRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEstimateCostUseCase(): EstimateCostUseCase {
+        return EstimateCostUseCase()
     }
 
     @Provides
