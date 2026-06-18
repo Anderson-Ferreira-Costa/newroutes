@@ -18,14 +18,12 @@ import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Circle
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.TwoWheeler
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
@@ -38,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -140,9 +137,6 @@ fun SummaryScreen(
             uiState.route != null -> {
                 SummaryContent(
                     route = uiState.route!!,
-                    isSaved = uiState.isSaved,
-                    isSaving = uiState.isSaving,
-                    onSaveRoute = viewModel::saveRoute,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -153,9 +147,6 @@ fun SummaryScreen(
 @Composable
 private fun SummaryContent(
     route: Route,
-    isSaved: Boolean,
-    isSaving: Boolean,
-    onSaveRoute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -177,14 +168,6 @@ private fun SummaryContent(
 
         item {
             ItineraryCard(route = route)
-        }
-
-        item {
-            SaveButton(
-                isSaved = isSaved,
-                isSaving = isSaving,
-                onSaveRoute = onSaveRoute
-            )
         }
 
         item {
@@ -436,54 +419,4 @@ private fun ItineraryCard(route: Route) {
     }
 }
 
-@Composable
-private fun SaveButton(
-    isSaved: Boolean,
-    isSaving: Boolean,
-    onSaveRoute: () -> Unit
-) {
-    if (isSaved) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = Color(0xFF4CAF50),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "Rota salva",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF4CAF50)
-            )
-        }
-    } else {
-        OutlinedButton(
-            onClick = onSaveRoute,
-            enabled = !isSaving,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            if (isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Salvando...")
-            } else {
-                Icon(Icons.Default.Save, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Salvar rota")
-            }
-        }
-    }
-}
+

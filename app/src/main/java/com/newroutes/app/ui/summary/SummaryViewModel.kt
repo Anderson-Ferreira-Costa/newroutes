@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.usecase.GetRoutesUseCase
-import com.newroutes.app.domain.usecase.SaveRouteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,15 +16,12 @@ import javax.inject.Inject
 data class SummaryUiState(
     val route: Route? = null,
     val isLoading: Boolean = true,
-    val isSaved: Boolean = false,
-    val isSaving: Boolean = false,
     val error: String? = null
 )
 
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
     getRoutesUseCase: GetRoutesUseCase,
-    private val saveRouteUseCase: SaveRouteUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -65,27 +61,6 @@ class SummaryViewModel @Inject constructor(
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * Salva a rota atual usando SaveRouteUseCase.
-     */
-    fun saveRoute() {
-        val route = _uiState.value.route ?: return
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true) }
-            saveRouteUseCase.invoke(route)
-                .onSuccess {
-                    _uiState.update {
-                        it.copy(isSaving = false, isSaved = true)
-                    }
-                }
-                .onFailure { exception ->
-                    _uiState.update {
-                        it.copy(isSaving = false, error = exception.message)
-                    }
-                }
         }
     }
 

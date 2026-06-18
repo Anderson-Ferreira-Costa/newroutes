@@ -38,16 +38,18 @@ fun AppBottomNavigation(
         modifier = modifier
     ) {
         destinations.forEach { destination ->
-            val selected = currentRoute == destination.route ||
-                (destination.route == "map" && currentRoute?.startsWith("summary/") == true) ||
-                (destination.route == "map" && currentRoute?.startsWith("route") == true)
+            val isCurrentRoute = currentRoute == destination.route
+            val isSummaryRoute = destination.route == "map" && currentRoute?.startsWith("summary/") == true
+            val isRouteScreen = destination.route == "map" && currentRoute?.startsWith("route") == true
+
+            val selected = isCurrentRoute || isSummaryRoute || isRouteScreen
 
             NavigationBarItem(
                 icon = { Icon(destination.icon, contentDescription = destination.label) },
                 label = { Text(destination.label) },
                 selected = selected,
                 onClick = {
-                    if (currentRoute != destination.route) {
+                    if (!selected) {
                         navController.navigate(destination.route) {
                             launchSingleTop = true
                             restoreState = true
