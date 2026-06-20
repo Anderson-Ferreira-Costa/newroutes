@@ -30,7 +30,7 @@ fun AppBottomNavigation(
     modifier: Modifier = Modifier
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
 
     val destinations = listOf(NavDestination.Map, NavDestination.Vehicle, NavDestination.Routes)
 
@@ -38,18 +38,20 @@ fun AppBottomNavigation(
         modifier = modifier
     ) {
         destinations.forEach { destination ->
-            val isCurrentRoute = currentRoute == destination.route
-            val isSummaryRoute = destination.route == "map" && currentRoute?.startsWith("summary/") == true
-            val isRouteScreen = destination.route == "map" && currentRoute?.startsWith("route") == true
-
-            val selected = isCurrentRoute || isSummaryRoute || isRouteScreen
+            val currentRoute = currentDestination?.route
+            val isSelected = when (destination.route) {
+                "map" -> currentRoute == "map"
+                "vehicle" -> currentRoute == "vehicle"
+                "routes" -> currentRoute == "routes" || currentRoute == "route" || currentRoute?.startsWith("summary/") == true
+                else -> false
+            }
 
             NavigationBarItem(
                 icon = { Icon(destination.icon, contentDescription = destination.label) },
                 label = { Text(destination.label) },
-                selected = selected,
+                selected = isSelected,
                 onClick = {
-                    if (!selected) {
+                    if (!isSelected) {
                         navController.navigate(destination.route) {
                             launchSingleTop = true
                             restoreState = true

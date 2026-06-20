@@ -549,6 +549,10 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
             return ALIASES[nome]
         return nome
 
+    # Inicializa campo fonte_preco para todas as praças
+    for p in pracas:
+        p['fonte_preco'] = ''
+
     # Aplicar hardcoded prices como fallback para todas as praças
     for p in pracas:
         conc = p['concessionaria']
@@ -559,12 +563,14 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
             price = fuzzy_match(p['praca_de_pedagio'], prices_to_use, cutoff=0.55)
             if price:
                 p['preco_categoria_1'] = f"{price:.2f}"
+                p['fonte_preco'] = 'hardcoded'
                 continue
             # 2) Se contém "free flow", tentar preço genérico "free flow"
             if 'free flow' in unidecode(p['praca_de_pedagio']).lower():
                 ff_price = prices_to_use.get('free flow')
                 if ff_price:
                     p['preco_categoria_1'] = f"{ff_price:.2f}"
+                    p['fonte_preco'] = 'hardcoded'
                     continue
 
     # Marcar concessionárias que já foram resolvidas no primeiro loop
@@ -586,8 +592,9 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
 
         # Resolver alias para lookup de HARDCODED_PRICES
         conc_base = resolve_concessionaria(conc)
-        prices = all_prices.get(conc, {})
+        scraped_prices = all_prices.get(conc, {})
         # If no prices from ANTT page, try hardcoded (with alias resolution)
+        prices = scraped_prices
         if not prices and conc_base in HARDCODED_PRICES:
             prices = HARDCODED_PRICES[conc_base]
         if not prices:
@@ -595,6 +602,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
             sem_match.extend(p for p in praças_csv if not p['preco_categoria_1'])
             continue
 
+        is_url = bool(scraped_prices)
         # Detectar se temos preços por praça nomeada ou preço único
         praça_indices = {}  # praça_index → price
         preco_unico = None
@@ -610,6 +618,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
             # Preço único para todas as praças desta concessionária
             for p in praças_csv:
                 p['preco_categoria_1'] = f"{preco_unico:.2f}"
+                p['fonte_preco'] = 'url' if is_url else 'hardcoded'
                 matched += 1
         elif praça_indices:
             # Preços por praça — tentar matching posicional
@@ -622,6 +631,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
                 for i, p in enumerate(praças_csv):
                     price = praça_indices[sorted_indices[i]]
                     p['preco_categoria_1'] = f"{price:.2f}"
+                    p['fonte_preco'] = 'url' if is_url else 'hardcoded'
                     matched += 1
             elif csv_count < anTT_count:
                 # Mais praças na ANTT que no CSV: usar as primeiras N
@@ -630,6 +640,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
                     if i < anTT_count:
                         price = praça_indices[sorted_indices[i]]
                         p['preco_categoria_1'] = f"{price:.2f}"
+                        p['fonte_preco'] = 'url' if is_url else 'hardcoded'
                         matched += 1
                     else:
                         sem_match.append(p)
@@ -641,6 +652,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
                     common_price = list(unique_prices)[0]
                     for p in praças_csv:
                         p['preco_categoria_1'] = f"{common_price:.2f}"
+                        p['fonte_preco'] = 'url' if is_url else 'hardcoded'
                         matched += 1
                 else:
                     # Preços diferentes mas contagem diferente: fuzzy match como fallback
@@ -648,6 +660,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
                         price = fuzzy_match(p['praca_de_pedagio'], prices)
                         if price:
                             p['preco_categoria_1'] = f"{price:.2f}"
+                            p['fonte_preco'] = 'url' if is_url else 'hardcoded'
                             matched += 1
                         elif not p['preco_categoria_1']:
                             # Só adicionar ao sem_match se ainda não tem preço
@@ -658,6 +671,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
                 price = fuzzy_match(p['praca_de_pedagio'], prices)
                 if price:
                     p['preco_categoria_1'] = f"{price:.2f}"
+                    p['fonte_preco'] = 'url' if is_url else 'hardcoded'
                     matched += 1
                 elif not p['preco_categoria_1']:
                     sem_match.append(p)
@@ -665,7 +679,7 @@ def match_and_export(pracas: list[dict], all_prices: dict[str, dict[str, float]]
     # CSV completo
     output_csv = OUTPUT_DIR / "pracas_com_preco.csv"
     fieldnames = ['concessionaria','praca_de_pedagio','rodovia','uf',
-                  'municipio','latitude','longitude','preco_categoria_1']
+                  'municipio','latitude','longitude','preco_categoria_1','fonte_preco']
     with open(output_csv, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -694,6 +708,41 @@ def print_report(pracas, all_prices, matched, sem_match):
     print(f"Concessionárias mapeadas:      {mapeadas}/{total}")
     print(f"Praças com preço encontrado:   {matched} ({matched/len(pracas)*100:.1f}%)")
     print(f"Praças sem match:              {len(sem_match)}")
+
+    # === Origem dos preços ===
+    total = len(pracas)
+    by_source = {}
+    by_source_concs = {}
+    for p in pracas:
+        fonte = p.get('fonte_preco', '')
+        if fonte:
+            by_source[fonte] = by_source.get(fonte, 0) + 1
+            conc = p['concessionaria']
+            if fonte not in by_source_concs:
+                by_source_concs[fonte] = set()
+            by_source_concs[fonte].add(conc)
+
+    print("\n=== Origem dos preços ===")
+
+    # Via scraping (URL)
+    url_count = by_source.get('url', 0)
+    url_pct = url_count / total * 100 if total else 0
+    print(f"Via scraping (URL):   {url_count} praças ({url_pct:.1f}%)")
+    url_concs = sorted(by_source_concs.get('url', set()))
+    if url_concs:
+        print(f"  Concessionárias: {', '.join(url_concs)}")
+
+    # Via hardcoded
+    hc_count = by_source.get('hardcoded', 0)
+    hc_pct = hc_count / total * 100 if total else 0
+    print(f"Via hardcoded:        {hc_count} praças ({hc_pct:.1f}%)")
+    hc_concs = sorted(by_source_concs.get('hardcoded', set()))
+    if hc_concs:
+        print(f"  Concessionárias: {', '.join(hc_concs)}")
+
+    # Sem preço
+    sem_count = by_source.get('sem_preco', 0) + len(sem_match)
+    print(f"Sem preço:            {sem_count} praças")
 
     sem_url = [n for n, u in CONCESSIONARIA_URLS.items() if u is None]
     if sem_url:
