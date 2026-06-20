@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Motorcycle
 import androidx.compose.material.icons.filled.RadioButtonChecked
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TwoWheeler
@@ -62,6 +63,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -277,7 +279,8 @@ private fun MapBottomSheet(
                 RouteSummaryCompact(
                     route = uiState.currentRoute,
                     onNavigateToSummary = onNavigateToSummary,
-                    isSaved = uiState.isSaved
+                    isSaved = uiState.isSaved,
+                    onNewRoute = viewModel::clearRoute
                 )
             } else {
                 BottomSheetSearchContent(
@@ -517,11 +520,35 @@ private fun DestinationChip(waypoint: Waypoint, onRemove: () -> Unit) {
 private fun RouteSummaryCompact(
     route: Route,
     onNavigateToSummary: (Route) -> Unit,
-    isSaved: Boolean
+    isSaved: Boolean,
+    onNewRoute: () -> Unit
 ) {
     val durationText = formatDuration(route.durationSeconds)
 
     Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Resumo da Rota",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            TextButton(onClick = onNewRoute) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Nova rota")
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

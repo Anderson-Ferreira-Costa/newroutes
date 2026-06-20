@@ -248,7 +248,11 @@ class MapViewModel @Inject constructor(
                 intermediateWaypoints = emptyList(),
                 currentRoute = null,
                 encodedPolyline = null,
-                isSaved = false
+                isSaved = false,
+                originQuery = "",
+                destinationQuery = "",
+                originResults = emptyList(),
+                destinationResults = emptyList()
             )
         }
     }
