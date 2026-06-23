@@ -7,11 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 /**
- * Agrupa operações de gerenciamento de veículos.
- *
- * Fornece interface unificada para salvar, excluir, listar e definir
- * veículo padrão, centralizando operações que pertencem ao domínio
- * mas são orquestradas por esta classe.
+ * UseCase para gerenciamento de veículos (CRUD + seleção de padrão).
  */
 class ManageVehicleUseCase(
     private val vehicleRepository: IVehicleRepository

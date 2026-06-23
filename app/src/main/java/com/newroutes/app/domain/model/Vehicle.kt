@@ -3,8 +3,7 @@ package com.newroutes.app.domain.model
 import java.util.UUID
 
 /**
- * Representa um veículo para cálculo de custos de pedágio e combustível.
- * Contém a categoria compatível com a tabela de pedágios e parâmetros de consumo.
+ * Representa um veículo cadastrado pelo usuário para cálculo de custos de combustível.
  */
 data class Vehicle(
     val id: UUID = UUID.randomUUID(),

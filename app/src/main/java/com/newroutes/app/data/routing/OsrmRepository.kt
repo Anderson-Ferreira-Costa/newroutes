@@ -3,12 +3,12 @@ package com.newroutes.app.data.routing
 import com.newroutes.app.domain.model.Waypoint
 
 /**
- * Implementação concreta do repositório de roteamento usando a API OSRM.
- *
- * Não implementa interface de domain/ — IRouteRepository será implementada
- * por RouteRepository em Session 6 (junto com Room para persistência local).
+ * Implementação concreta do repositório de roteamento usando a API OSRM pública.
  *
  * Recebe OsrmApi via construtor para injeção de dependência (Hilt).
+ *
+ * Responsabilidade única: traduzir resposta bruta do OSRM em [OsrmRouteResult].
+ * A persistência de rotas é tratada por [RouteRepository].
  */
 class OsrmRepository(
     private val osrmApi: OsrmApi

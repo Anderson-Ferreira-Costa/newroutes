@@ -14,16 +14,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class RouteUiState(
-    val vehicles: List<Vehicle> = emptyList(),
-    val selectedVehicle: Vehicle? = null,
-    val searchQuery: String = "",
-    val searchResults: List<Waypoint> = emptyList(),
-    val isSearching: Boolean = false,
-    val waypoints: List<Waypoint> = emptyList(),
-    val error: String? = null
-)
-
+/**
+ * ViewModel da tela de configuração de rota — seleção de veículo e waypoints intermediários.
+ */
 @HiltViewModel
 class RouteViewModel @Inject constructor(
     private val manageVehicleUseCase: ManageVehicleUseCase,
@@ -41,17 +34,10 @@ class RouteViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Seleciona um veículo para uso no cálculo da rota.
-     */
     fun selectVehicle(vehicle: Vehicle) {
         _uiState.update { it.copy(selectedVehicle = vehicle) }
     }
 
-    /**
-     * Busca localidades usando Photon e exibe os resultados para seleção.
-     * O usuário deve clicar no resultado para adicionar como waypoint.
-     */
     fun onSearchQueryChanged(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
     }
@@ -79,27 +65,18 @@ class RouteViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Adiciona um waypoint intermediário à lista.
-     */
     fun addWaypoint(waypoint: Waypoint) {
         _uiState.update {
             it.copy(waypoints = it.waypoints + waypoint)
         }
     }
 
-    /**
-     * Remove um waypoint intermediário da lista.
-     */
     fun removeWaypoint(waypoint: Waypoint) {
         _uiState.update {
             it.copy(waypoints = it.waypoints - waypoint)
         }
     }
 
-    /**
-     * Reordena a lista de waypoints trocando as posições from e to.
-     */
     fun reorderWaypoints(from: Int, to: Int) {
         _uiState.update { state ->
             val newWaypoints = state.waypoints.toMutableList()
@@ -112,10 +89,17 @@ class RouteViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Limpa o campo de erro atual.
-     */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
 }
+
+data class RouteUiState(
+    val vehicles: List<Vehicle> = emptyList(),
+    val selectedVehicle: Vehicle? = null,
+    val searchQuery: String = "",
+    val searchResults: List<Waypoint> = emptyList(),
+    val isSearching: Boolean = false,
+    val waypoints: List<Waypoint> = emptyList(),
+    val error: String? = null
+)

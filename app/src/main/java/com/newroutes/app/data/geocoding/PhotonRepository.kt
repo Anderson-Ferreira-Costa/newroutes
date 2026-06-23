@@ -3,9 +3,7 @@ package com.newroutes.app.data.geocoding
 import com.newroutes.app.domain.model.Waypoint
 
 /**
- * Implementação concreta do repositório de geocoding usando a API Photon.
- *
- * Substitui o NominatimRepository — usa Photon (Komoot) ao invés de Nominatim (OSM).
+ * Implementação do repositório de geocodificação usando a API Photon (Komoot).
  *
  * Recebe PhotonApi via construtor para injeção de dependência (Hilt).
  */

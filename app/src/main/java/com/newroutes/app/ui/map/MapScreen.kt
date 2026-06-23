@@ -43,7 +43,6 @@ import androidx.compose.material.icons.filled.Motorcycle
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TwoWheeler
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -91,16 +90,12 @@ import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.model.TollCategory
 import com.newroutes.app.domain.model.Vehicle
 import com.newroutes.app.domain.model.Waypoint
+import com.newroutes.app.ui.navigation.SharedRouteConfig
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
-
-data class SharedRouteConfig(
-    var waypoints: List<Waypoint> = emptyList(),
-    var vehicle: Vehicle? = null
-)
 
 @Composable
 fun MapScreen(
@@ -249,8 +244,7 @@ fun MapScreen(
             uiState = uiState,
             viewModel = viewModel,
             onNavigateToSummary = onNavigateToSummary,
-            onNavigateToVehicle = onNavigateToVehicle,
-            onNavigateToRoutes = { navController.navigate("routes") { launchSingleTop = true } }
+            onNavigateToVehicle = onNavigateToVehicle
         )
     }
 }
@@ -260,8 +254,7 @@ private fun MapBottomSheet(
     uiState: MapUiState,
     viewModel: MapViewModel,
     onNavigateToSummary: (Route) -> Unit,
-    onNavigateToVehicle: () -> Unit,
-    onNavigateToRoutes: () -> Unit
+    onNavigateToVehicle: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxWidth(),

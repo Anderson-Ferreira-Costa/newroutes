@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
+/**
+ * ViewModel da tela de rotas salvas — lista todas as rotas com histórico.
+ */
 @HiltViewModel
 class SavedRoutesViewModel @Inject constructor(
     getRoutesUseCase: GetRoutesUseCase
