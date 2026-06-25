@@ -4,7 +4,7 @@ import com.newroutes.app.domain.model.Route
 import com.newroutes.app.domain.repository.IRouteRepository
 
 /**
- * UseCase para persistir uma rota calculada no banco de dados local.
+ * Persiste uma rota calculada no armazenamento persistente.
  */
 class SaveRouteUseCase(
     private val routeRepository: IRouteRepository

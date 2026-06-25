@@ -7,7 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.newroutes.app.ui.map.MapScreen
-import com.newroutes.app.ui.navigation.SharedRouteConfig
+import com.newroutes.app.ui.map.SharedRouteConfig
 import com.newroutes.app.ui.route.RouteScreen
 import com.newroutes.app.ui.routes.SavedRoutesScreen
 import com.newroutes.app.ui.summary.SummaryScreen

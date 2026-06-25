@@ -1,5 +1,6 @@
 package com.newroutes.app.ui.vehicle
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.newroutes.app.domain.model.TollCategory
@@ -14,9 +15,18 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-/**
- * ViewModel da tela de gerenciamento de veículos — cadastro, edição e exclusão.
- */
+data class VehicleUiState(
+    val vehicles: List<Vehicle> = emptyList(),
+    val name: String = "",
+    val category: TollCategory = TollCategory.CAR,
+    val fuelConsumption: String = "",
+    val fuelPrice: String = "",
+    val isDefault: Boolean = false,
+    val isSaving: Boolean = false,
+    val isSaved: Boolean = false,
+    val error: String? = null
+)
+
 @HiltViewModel
 class VehicleViewModel @Inject constructor(
     private val manageVehicleUseCase: ManageVehicleUseCase
@@ -33,28 +43,51 @@ class VehicleViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Atualiza o nome do veículo no formulário.
+     */
     fun onNameChanged(value: String) {
         _uiState.update { it.copy(name = value) }
     }
 
+    /**
+     * Atualiza a categoria do veículo no formulário.
+     */
     fun onCategoryChanged(category: TollCategory) {
         _uiState.update { it.copy(category = category) }
     }
 
+    /**
+     * Atualiza o consumo de combustível — aceita apenas dígitos e ponto.
+     */
     fun onFuelConsumptionChanged(value: String) {
         _uiState.update { it.copy(fuelConsumption = value.filter { it.isDigit() || it == '.' }) }
     }
 
+    /**
+     * Atualiza o preço do combustível — aceita apenas dígitos e ponto.
+     */
     fun onFuelPriceChanged(value: String) {
         _uiState.update { it.copy(fuelPrice = value.filter { it.isDigit() || it == '.' }) }
     }
 
+    /**
+     * Atualiza o flag de veículo padrão.
+     */
     fun onIsDefaultChanged(value: Boolean) {
         _uiState.update { it.copy(isDefault = value) }
     }
 
+    /**
+     * Salva o veículo atual.
+     *
+     * Valida campos obrigatórios, constrói o Vehicle e chama ManageVehicleUseCase.save().
+     * Se isDefault == true ou vehicles estiver vazio, chama setDefault() após o save.
+     * Reseta o formulário após sucesso (isSaved = true).
+     */
     fun saveVehicle() {
         val state = _uiState.value
+        Log.d("VehicleViewModel", "saveVehicle chamado — name=${state.name}, consumption=${state.fuelConsumption}, price=${state.fuelPrice}")
 
         if (state.name.isBlank()) {
             _uiState.update { it.copy(error = "Nome é obrigatório") }
@@ -108,22 +141,34 @@ class VehicleViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Deleta um veículo pelo ID.
+     */
     fun deleteVehicle(id: UUID) {
         viewModelScope.launch {
             manageVehicleUseCase.delete(id)
         }
     }
 
+    /**
+     * Define um veículo como padrão.
+     */
     fun setDefault(id: UUID) {
         viewModelScope.launch {
             manageVehicleUseCase.setDefault(id)
         }
     }
 
+    /**
+     * Limpa o campo de erro atual.
+     */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
 
+    /**
+     * Limpa todos os campos do formulário.
+     */
     fun resetForm() {
         _uiState.update {
             VehicleUiState(
@@ -133,15 +178,3 @@ class VehicleViewModel @Inject constructor(
         }
     }
 }
-
-data class VehicleUiState(
-    val vehicles: List<Vehicle> = emptyList(),
-    val name: String = "",
-    val category: TollCategory = TollCategory.CAR,
-    val fuelConsumption: String = "",
-    val fuelPrice: String = "",
-    val isDefault: Boolean = false,
-    val isSaving: Boolean = false,
-    val isSaved: Boolean = false,
-    val error: String? = null
-)

@@ -13,9 +13,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel da tela de resumo detalhado de uma rota específica.
- */
+data class SummaryUiState(
+    val route: Route? = null,
+    val isLoading: Boolean = true,
+    val error: String? = null
+)
+
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
     getRoutesUseCase: GetRoutesUseCase,
@@ -49,6 +52,7 @@ class SummaryViewModel @Inject constructor(
                 }
         }
 
+        // Check if route was already found during collection
         viewModelScope.launch {
             _uiState.collect { state ->
                 if (!state.isLoading && state.route == null && routeIdString.isNotEmpty()) {
@@ -60,13 +64,10 @@ class SummaryViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Limpa o campo de erro atual.
+     */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
 }
-
-data class SummaryUiState(
-    val route: Route? = null,
-    val isLoading: Boolean = true,
-    val error: String? = null
-)

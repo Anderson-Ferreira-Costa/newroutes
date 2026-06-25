@@ -8,7 +8,13 @@ import com.newroutes.app.data.routing.OsrmRepository
 import kotlinx.coroutines.flow.first
 
 /**
- * UseCase para calcular uma rota completa (OSRM + custo de combustível).
+ * Orquestra o cálculo de uma rota completa dado origem, destino e waypoints intermediários.
+ *
+ * Responsabilidades:
+ * - Validar número mínimo de waypoints
+ * - Resolver o veículo a ser usado (argumento ou padrão)
+ * - Obter distância e duração reais via OSRM
+ * - Calcular custo de combustível
  */
 class CalculateRouteUseCase(
     private val vehicleRepository: IVehicleRepository,

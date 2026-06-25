@@ -14,8 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.newroutes.app.ui.map.SharedRouteConfig
 import com.newroutes.app.ui.navigation.AppBottomNavigation
-import com.newroutes.app.ui.navigation.SharedRouteConfig
 import com.newroutes.app.ui.navigation.AppNavigation
 import dagger.hilt.android.AndroidEntryPoint
 

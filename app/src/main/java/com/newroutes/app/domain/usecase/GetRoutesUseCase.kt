@@ -6,7 +6,9 @@ import com.newroutes.app.domain.repository.IRouteRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
- * UseCase para recuperar todas as rotas salvas como [Flow].
+ * Recupera todas as rotas salvas como stream observável.
+ *
+ * Delegação direta ao repository — sem transformação ou filtragem adicional.
  */
 class GetRoutesUseCase(
     private val routeRepository: IRouteRepository

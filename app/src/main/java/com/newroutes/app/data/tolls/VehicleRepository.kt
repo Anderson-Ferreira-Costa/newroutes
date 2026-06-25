@@ -48,6 +48,10 @@ class VehicleRepository(
 
     /**
      * Marca um veículo como padrão, desmarcando todos os demais.
+     *
+     * Executa clearDefault() seguido de setDefault(id) em sequência.
+     *
+     * TODO: Envolver em @Transaction para garantir atomicidade em versão futura.
      */
     override suspend fun setDefault(id: UUID) {
         dao.clearDefault()

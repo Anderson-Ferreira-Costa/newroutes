@@ -34,9 +34,6 @@ data class MapUiState(
     val error: String? = null
 )
 
-/**
- * ViewModel da tela do mapa: busca de origem/destino, cálculo e salvamento automático de rotas.
- */
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val photonRepository: PhotonRepository,
@@ -142,25 +139,47 @@ class MapViewModel @Inject constructor(
     }
 
     fun clearOriginSearchResults() {
-        _uiState.update { it.copy(originResults = emptyList()) }
+        _uiState.update {
+            it.copy(
+                originResults = emptyList()
+            )
+        }
     }
 
     fun clearDestinationSearchResults() {
-        _uiState.update { it.copy(destinationResults = emptyList()) }
+        _uiState.update {
+            it.copy(
+                destinationResults = emptyList()
+            )
+        }
     }
 
+    /**
+     * Adiciona um waypoint intermediário à lista de paradas.
+     */
     fun addIntermediateWaypoint(waypoint: Waypoint) {
         _uiState.update {
-            it.copy(intermediateWaypoints = it.intermediateWaypoints + waypoint)
+            it.copy(
+                intermediateWaypoints = it.intermediateWaypoints + waypoint
+            )
         }
     }
 
+    /**
+     * Remove um waypoint intermediário da lista de paradas.
+     */
     fun removeIntermediateWaypoint(waypoint: Waypoint) {
         _uiState.update {
-            it.copy(intermediateWaypoints = it.intermediateWaypoints - waypoint)
+            it.copy(
+                intermediateWaypoints = it.intermediateWaypoints - waypoint
+            )
         }
     }
 
+    /**
+     * Calcula a rota entre origem e destino (com paradas intermediárias),
+     * usando CalculateRouteUseCase para orquestrar o cálculo.
+     */
     fun calculateRoute() {
         val state = _uiState.value
         if (state.selectedOrigin == null || state.selectedDestination == null) return
@@ -210,10 +229,17 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Limpa o campo de erro atual.
+     */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
 
+    /**
+     * Reseta todos os dados da rota: origem, destino, paradas intermediárias,
+     * rota atual e polyline codificada.
+     */
     fun clearRoute() {
         _uiState.update {
             it.copy(
@@ -231,7 +257,21 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Define o veículo selecionado a partir de uma configuração compartilhada.
+     */
     fun setSelectedVehicle(vehicle: Vehicle) {
         _uiState.update { it.copy(selectedVehicle = vehicle) }
+    }
+
+    /**
+     * Adiciona múltiplos waypoints intermediários de uma vez.
+     */
+    fun addIntermediateWaypoints(waypoints: List<Waypoint>) {
+        _uiState.update {
+            it.copy(
+                intermediateWaypoints = it.intermediateWaypoints + waypoints
+            )
+        }
     }
 }

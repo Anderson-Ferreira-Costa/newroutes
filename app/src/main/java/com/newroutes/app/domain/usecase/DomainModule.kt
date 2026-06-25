@@ -10,7 +10,10 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Módulo Hilt para prover os UseCases da camada de domínio.
+ * Módulo Hilt para prover os UseCases do domínio.
+ *
+ * Os UseCases dependem de interfaces de domínio (repository) e são
+ * criados como singletons pelo Hilt.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,6 +38,12 @@ object DomainModule {
         osrmRepository: OsrmRepository
     ): CalculateRouteUseCase {
         return CalculateRouteUseCase(vehicleRepository, osrmRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEstimateCostUseCase(): EstimateCostUseCase {
+        return EstimateCostUseCase()
     }
 
     @Provides
